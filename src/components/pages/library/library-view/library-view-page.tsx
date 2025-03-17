@@ -138,6 +138,7 @@ export const LibraryViewPage = (props: Props) => {
 			panel = (
 				<ItemPanel
 					item={element as Item}
+					showCustomizations={true}
 					mode={PanelMode.Full}
 				/>
 			);
@@ -190,7 +191,7 @@ export const LibraryViewPage = (props: Props) => {
 			panel = (
 				<TerrainPanel
 					terrain={element as Terrain}
-					showUpgrades={true}
+					showCustomizations={true}
 					mode={PanelMode.Full}
 				/>
 			);
@@ -211,10 +212,28 @@ export const LibraryViewPage = (props: Props) => {
 		return null;
 	}
 
+	const getSubheader = () => {
+		if (kind === 'class') {
+			if (subElementID) {
+				return 'Subclass';
+			}
+		}
+
+		if (kind === 'monster-group') {
+			if (subElementID) {
+				return 'Monster';
+			}
+
+			return 'Monster Group';
+		}
+
+		return Format.capitalize(kind!);
+	};
+
 	try {
 		return (
 			<div className='library-view-page'>
-				<AppHeader subheader={Format.capitalize(kind!)} showDirectory={props.showDirectory} showAbout={props.showAbout} showRoll={props.showRoll}>
+				<AppHeader subheader={getSubheader()} showDirectory={props.showDirectory} showAbout={props.showAbout} showRoll={props.showRoll}>
 					{
 						subElementID ?
 							<Button icon={<LeftOutlined />} onClick={() => navigation.goToLibraryView(kind!, elementID!)}>

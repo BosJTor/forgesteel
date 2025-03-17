@@ -14,6 +14,10 @@
 * Add data:
   * Rivals
   * Imbued items
+    * Add a toggle so the user can add enhancements by the rules or add anything
+    * Imbued armor grants +6 / +12 / +21 stamina based on highest enhancement tier
+    * Imbued implement grants +1 / +2 / +3 damage to magic / psionic abilities based on highest enhancement tier
+    * Imbued weapon grants +1 / +2 / +3 damage to weapon abilities based on highest enhancement tier
 * Monster Builder:
   * Auto-create monsters
 
@@ -34,3 +38,7 @@
 * Encounter tracker
 * Montage tracker
 * Negotiation tracker
+
+### Ideas
+
+* Add guides for specific features
