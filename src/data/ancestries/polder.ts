@@ -1,6 +1,8 @@
 import { AbilityKeyword } from '../../enums/ability-keyword';
 import { Ancestry } from '../../models/ancestry';
+import { ConditionType } from '../../enums/condition-type';
 import { DamageModifierType } from '../../enums/damage-modifier-type';
+import { DamageType } from '../../enums/damage-type';
 import { FactoryLogic } from '../../logic/factory-logic';
 import { FeatureField } from '../../enums/feature-field';
 
@@ -36,7 +38,7 @@ export const polder: Ancestry = {
 						id: 'polder-feature-3-1',
 						name: 'Corruption Immunity',
 						modifiers: [
-							FactoryLogic.damageModifier.createValuePlusPerLevel({ damageType: 'Corruption', modifierType: DamageModifierType.Immunity, value: 2, perLevel: 1 })
+							FactoryLogic.damageModifier.createValuePlusPerLevel({ damageType: DamageType.Corruption, modifierType: DamageModifierType.Immunity, value: 2, perLevel: 1 })
 						]
 					}),
 					value: 1
@@ -60,10 +62,11 @@ export const polder: Ancestry = {
 					value: 1
 				},
 				{
-					feature: FactoryLogic.feature.create({
+					feature: FactoryLogic.feature.createConditionImmunity({
 						id: 'polder-feature-3-4',
 						name: 'Fearless',
-						description: 'Courage is all you know. You can’t be frightened.'
+						description: 'Courage is all you know.',
+						conditions: [ ConditionType.Frightened ]
 					}),
 					value: 2
 				},

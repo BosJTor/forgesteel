@@ -33,7 +33,7 @@ export class TerrainLogic {
 		return Collections.sort(modifiers, dm => dm.damageType);
 	};
 
-	static getStamina = (terrain: Terrain) => {
+	static getStaminaDescription = (terrain: Terrain) => {
 		if (terrain.stamina.base && !terrain.stamina.perSquare) {
 			return `${terrain.stamina.base}`;
 		}
@@ -43,6 +43,20 @@ export class TerrainLogic {
 		}
 
 		return `${terrain.stamina.base} + ${terrain.stamina.perSquare} per square`;
+	};
+
+	static getStaminaValue = (terrain: Terrain) => {
+		let value = terrain.stamina.base;
+
+		if (terrain.stamina.perSquare) {
+			value += (terrain.stamina.perSquare * terrain.state.squares);
+		}
+
+		if (terrain.state.staminaDamage > 0) {
+			value -= terrain.state.staminaDamage;
+		}
+
+		return Math.max(value, 0);
 	};
 
 	static matches = (terrain: Terrain, filter: TerrainFilter) => {

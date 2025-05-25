@@ -2,6 +2,7 @@ import { AbilityDistanceType } from '../../enums/abiity-distance-type';
 import { AbilityKeyword } from '../../enums/ability-keyword';
 import { Characteristic } from '../../enums/characteristic';
 import { DamageModifierType } from '../../enums/damage-modifier-type';
+import { DamageType } from '../../enums/damage-type';
 import { FactoryLogic } from '../../logic/factory-logic';
 import { FeatureField } from '../../enums/feature-field';
 import { HeroClass } from '../../models/class';
@@ -18,7 +19,10 @@ As an elementalist, you can unleash your wrath across a field of foes, put an en
 	heroicResource: 'Essence',
 	subclassName: 'Elemental Specialization',
 	subclassCount: 1,
-	primaryCharacteristics: [ Characteristic.Reason ],
+	primaryCharacteristicsOptions: [
+		[ Characteristic.Reason ]
+	],
+	primaryCharacteristics: [],
 	featuresByLevel: [
 		{
 			level: 1,
@@ -34,9 +38,10 @@ As an elementalist, you can unleash your wrath across a field of foes, put an en
 					field: FeatureField.Recoveries,
 					value: 8
 				}),
-				FactoryLogic.feature.createSkill({
+				FactoryLogic.feature.createSkillChoice({
 					id: 'elementalist-1-1',
-					skill: 'Magic'
+					listOptions: [ SkillList.Lore ],
+					selected: [ 'Magic' ]
 				}),
 				FactoryLogic.feature.createSkillChoice({
 					id: 'elementalist-1-2',
@@ -140,18 +145,22 @@ Choose one of the following effects:
 							value: 1
 						},
 						{
-							feature: FactoryLogic.feature.create({
+							feature: FactoryLogic.feature.createAbilityDamage({
 								id: 'elementalist-1-7c',
 								name: 'Enchantment of Destruction',
-								description: 'You harness the destructive power of flame inside your mind, allowing you to focus your magic on destroying your enemies. You gain a +1 rolled damage bonus with magic abilities.'
+								description: 'You harness the destructive power of flame inside your mind, allowing you to focus your magic on destroying your enemies.',
+								keywords: [ AbilityKeyword.Magic ],
+								modifier: 1
 							}),
 							value: 1
 						},
 						{
-							feature: FactoryLogic.feature.create({
+							feature: FactoryLogic.feature.createAbilityDistance({
 								id: 'elementalist-1-7d',
 								name: 'Enchantment of Distance',
-								description: 'You reach into the mysteries of the void and mix that element with all of your abilities. You gain a +2 bonus to the distance of your ranged magic abilities.'
+								description: 'You reach into the mysteries of the void and mix that element with all of your abilities.',
+								keywords: [ AbilityKeyword.Magic, AbilityKeyword.Ranged ],
+								modifier: 2
 							}),
 							value: 1
 						},
@@ -196,27 +205,27 @@ Choose one of the following effects:
 								description: 'The protective shield you weave around yourself is made of all the elements to channel their full protective power.',
 								modifiers: [
 									FactoryLogic.damageModifier.createCharacteristic({
-										damageType: 'Acid',
+										damageType: DamageType.Acid,
 										modifierType: DamageModifierType.Immunity,
 										characteristics: [ Characteristic.Reason ]
 									}),
 									FactoryLogic.damageModifier.createCharacteristic({
-										damageType: 'Cold',
+										damageType: DamageType.Cold,
 										modifierType: DamageModifierType.Immunity,
 										characteristics: [ Characteristic.Reason ]
 									}),
 									FactoryLogic.damageModifier.createCharacteristic({
-										damageType: 'Corruption',
+										damageType: DamageType.Corruption,
 										modifierType: DamageModifierType.Immunity,
 										characteristics: [ Characteristic.Reason ]
 									}),
 									FactoryLogic.damageModifier.createCharacteristic({
-										damageType: 'Fire',
+										damageType: DamageType.Fire,
 										modifierType: DamageModifierType.Immunity,
 										characteristics: [ Characteristic.Reason ]
 									}),
 									FactoryLogic.damageModifier.createCharacteristic({
-										damageType: 'Lightning',
+										damageType: DamageType.Lightning,
 										modifierType: DamageModifierType.Immunity,
 										characteristics: [ Characteristic.Reason ]
 									})
@@ -827,10 +836,11 @@ You can instead touch a doorway or other opening in a mundane dirt, stone, or me
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.create({
+						FactoryLogic.feature.createAbilityDamage({
 							id: 'elementalist-sub-2-1-1',
 							name: 'Acolyte of Fire',
-							description: 'Your abilities that have the Fire and Magic keywords gain a +1 rolled damage bonus.'
+							keywords: [ AbilityKeyword.Fire, AbilityKeyword.Magic ],
+							modifier: 1
 						}),
 						FactoryLogic.feature.createAbility({
 							ability: FactoryLogic.createAbility({
@@ -982,10 +992,11 @@ You can revert back to your true form as a maneuver. You can’t enter an animal
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.create({
+						FactoryLogic.feature.createAbilityDistance({
 							id: 'elementalist-sub-4-1-1',
 							name: 'Acolyte of the Void',
-							description: 'The distance of all your ranged void magic abilities increases by 2.'
+							keywords: [ AbilityKeyword.Magic, AbilityKeyword.Ranged, AbilityKeyword.Void ],
+							modifier: 2
 						}),
 						FactoryLogic.feature.create({
 							id: 'elementalist-sub-4-1-2',

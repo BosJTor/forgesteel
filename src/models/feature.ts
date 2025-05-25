@@ -3,6 +3,8 @@ import { Ability } from './ability';
 import { AbilityKeyword } from '../enums/ability-keyword';
 import { Ancestry } from './ancestry';
 import { Characteristic } from '../enums/characteristic';
+import { ConditionType } from '../enums/condition-type';
+import { DamageType } from '../enums/damage-type';
 import { Domain } from './domain';
 import { Element } from './element';
 import { FeatureField } from '../enums/feature-field';
@@ -10,7 +12,6 @@ import { FeatureType } from '../enums/feature-type';
 import { Item } from './item';
 import { ItemType } from '../enums/item-type';
 import { Kit } from './kit';
-import { KitType } from '../enums/kit-type';
 import { Monster } from './monster';
 import { Perk } from './perk';
 import { PerkList } from '../enums/perk-list';
@@ -40,28 +41,40 @@ export interface FeatureAbilityCostData extends _FeatureData {
 	keywords: AbilityKeyword[];
 	modifier: number;
 };
-export type FeatureAbilityCost = FeatureOf<FeatureType.AbilityCost, FeatureAbilityCostData>
+export type FeatureAbilityCost = FeatureOf<FeatureType.AbilityCost, FeatureAbilityCostData>;
+
+export interface FeatureAbilityDamageData extends _FeatureData, Modifier {
+	keywords: AbilityKeyword[];
+	damageType: DamageType;
+};
+export type FeatureAbilityDamage = FeatureOf<FeatureType.AbilityDamage, FeatureAbilityDamageData>;
+
+export interface FeatureAbilityDistanceData extends _FeatureData, Modifier {
+	keywords: AbilityKeyword[];
+};
+export type FeatureAbilityDistance = FeatureOf<FeatureType.AbilityDistance, FeatureAbilityDistanceData>;
 
 export interface FeatureAddOnData extends _FeatureData {
 	category: FeatureAddOnType;
 	cost: number;
 };
-export type FeatureAddOn = FeatureOf<FeatureType.AddOn, FeatureAddOnData>
+export type FeatureAddOn = FeatureOf<FeatureType.AddOn, FeatureAddOnData>;
 
 export interface FeatureAncestryChoiceData extends _FeatureData {
 	selected: Ancestry | null;
 };
-export type FeatureAncestryChoice = FeatureOf<FeatureType.AncestryChoice, FeatureAncestryChoiceData>
+export type FeatureAncestryChoice = FeatureOf<FeatureType.AncestryChoice, FeatureAncestryChoiceData>;
 
 export interface FeatureAncestryFeatureChoiceData extends _FeatureData {
 	source: {
 		current: boolean;
 		former: boolean;
+		customID: string;
 	};
 	value: number;
 	selected: Feature | null;
 };
-export type FeatureAncestryFeatureChoice = FeatureOf<FeatureType.AncestryFeatureChoice, FeatureAncestryFeatureChoiceData>
+export type FeatureAncestryFeatureChoice = FeatureOf<FeatureType.AncestryFeatureChoice, FeatureAncestryFeatureChoiceData>;
 
 export interface FeatureBonusData extends _FeatureData, Modifier {
 	field: FeatureField;
@@ -89,6 +102,11 @@ export interface FeatureClassAbilityData extends _FeatureData {
 	selectedIDs: string[];
 }
 export type FeatureClassAbility = FeatureOf<FeatureType.ClassAbility, FeatureClassAbilityData>;
+
+export interface FeatureConditionImmunityData extends _FeatureData {
+	conditions: ConditionType[];
+}
+export type FeatureConditionImmunity = FeatureOf<FeatureType.ConditionImmunity, FeatureConditionImmunityData>;
 
 export interface FeatureCompanionData extends _FeatureData {
 	type: 'companion' | 'mount' | 'retainer';
@@ -122,16 +140,11 @@ export interface FeatureItemChoiceData extends _FeatureData {
 export type FeatureItemChoice = FeatureOf<FeatureType.ItemChoice, FeatureItemChoiceData>;
 
 export interface FeatureKitData extends _FeatureData {
-	types: KitType[];
+	types: string[];
 	count: number;
 	selected: Kit[];
 };
 export type FeatureKit = FeatureOf<FeatureType.Kit, FeatureKitData>;
-
-export interface FeatureKitTypeData extends _FeatureData {
-	types: KitType[];
-};
-export type FeatureKitType = FeatureOf<FeatureType.KitType, FeatureKitTypeData>;
 
 export interface FeatureLanguageData extends _FeatureData {
 	language: string;
@@ -191,6 +204,19 @@ export interface FeatureSpeedData extends _FeatureData {
 };
 export type FeatureSpeed = FeatureOf<FeatureType.Speed, FeatureSpeedData>;
 
+export interface FeatureTaggedFeatureData extends _FeatureData {
+	tag: string;
+	feature: Feature;
+};
+export type FeatureTaggedFeature = FeatureOf<FeatureType.TaggedFeature, FeatureTaggedFeatureData>;
+
+export interface FeatureTaggedFeatureChoiceData extends _FeatureData {
+	tag: string;
+	count: number;
+	selected: Feature[];
+};
+export type FeatureTaggedFeatureChoice = FeatureOf<FeatureType.TaggedFeatureChoice, FeatureTaggedFeatureChoiceData>;
+
 export type FeatureText = FeatureOf<FeatureType.Text>;
 
 export interface FeatureTitleChoiceData extends _FeatureData {
@@ -203,6 +229,8 @@ export type FeatureTitleChoice = FeatureOf<FeatureType.TitleChoice, FeatureTitle
 export type Feature =
 	| FeatureAbility
 	| FeatureAbilityCost
+	| FeatureAbilityDamage
+	| FeatureAbilityDistance
 	| FeatureAddOn
 	| FeatureAncestryChoice
 	| FeatureAncestryFeatureChoice
@@ -211,12 +239,12 @@ export type Feature =
 	| FeatureChoice
 	| FeatureClassAbility
 	| FeatureCompanion
+	| FeatureConditionImmunity
 	| FeatureDamageModifier
 	| FeatureDomain
 	| FeatureDomainFeature
 	| FeatureItemChoice
 	| FeatureKit
-	| FeatureKitType
 	| FeatureLanguage
 	| FeatureLanguageChoice
 	| FeatureMalice
@@ -228,6 +256,8 @@ export type Feature =
 	| FeatureSkillChoice
 	| FeatureSpeed
 	| FeatureText
+	| FeatureTaggedFeature
+	| FeatureTaggedFeatureChoice
 	| FeatureTitleChoice;
 
 export type FeatureData = Feature['data'];

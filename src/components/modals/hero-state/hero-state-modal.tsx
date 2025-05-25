@@ -1,27 +1,28 @@
 import { Alert, Button, Divider, Drawer, Flex, Segmented, Space } from 'antd';
-import { ArrowUpOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
-import { Condition, Hero } from '../../../models/hero';
-import { ConditionEndType, ConditionType } from '../../../enums/condition-type';
+import { ArrowUpOutlined, CaretDownOutlined, CaretUpOutlined, PlusOutlined } from '@ant-design/icons';
 import { Collections } from '../../../utils/collections';
-import { ConditionPanel } from '../../panels/condition/condition-panel';
-import { ConditionSelectModal } from '../condition-select/condition-select-modal';
 import { DangerButton } from '../../controls/danger-button/danger-button';
+import { Empty } from '../../controls/empty/empty';
 import { Expander } from '../../controls/expander/expander';
 import { FactoryLogic } from '../../../logic/factory-logic';
-import { HealthPanel } from '../../panels/health/health-panel';
+import { Field } from '../../controls/field/field';
+import { HeaderText } from '../../controls/header-text/header-text';
+import { Hero } from '../../../models/hero';
+import { HeroHealthPanel } from '../../panels/health/health-panel';
 import { HeroLogic } from '../../../logic/hero-logic';
 import { HeroStatePage } from '../../../enums/hero-state-page';
 import { Item } from '../../../models/item';
 import { ItemPanel } from '../../panels/elements/item-panel/item-panel';
-import { ItemSelectModal } from '../item-select/item-select-modal';
+import { ItemSelectModal } from '../select/item-select/item-select-modal';
 import { ItemType } from '../../../enums/item-type';
 import { Modal } from '../modal/modal';
 import { MultiLine } from '../../controls/multi-line/multi-line';
 import { NumberSpin } from '../../controls/number-spin/number-spin';
+import { Options } from '../../../models/options';
 import { PanelMode } from '../../../enums/panel-mode';
 import { Project } from '../../../models/project';
 import { ProjectPanel } from '../../panels/elements/project-panel/project-panel';
-import { ProjectSelectModal } from '../project-select/project-select-modal';
+import { ProjectSelectModal } from '../select/project-select/project-select-modal';
 import { Sourcebook } from '../../../models/sourcebook';
 import { Utils } from '../../../utils/utils';
 import { talent } from '../../../data/classes/talent';
@@ -32,17 +33,18 @@ import './hero-state-modal.scss';
 interface Props {
 	hero: Hero;
 	sourcebooks: Sourcebook[];
+	options: Options;
 	startPage: HeroStatePage;
+	showEncounterControls: boolean;
 	onClose: () => void;
 	onChange: (hero: Hero) => void;
-	onLevelUp: () => void;
+	onLevelUp?: () => void;
 }
 
 export const HeroStateModal = (props: Props) => {
 	const [ hero, setHero ] = useState<Hero>(Utils.copy(props.hero));
 	const [ page, setPage ] = useState<HeroStatePage>(props.startPage);
 	const [ shopVisible, setShopVisible ] = useState<boolean>(false);
-	const [ conditionsVisible, setConditionsVisible ] = useState<boolean>(false);
 	const [ projectsVisible, setProjectsVisible ] = useState<boolean>(false);
 
 	const getHeroSection = () => {
@@ -74,223 +76,6 @@ export const HeroStateModal = (props: Props) => {
 			props.onChange(copy);
 		};
 
-		const startEncounter = () => {
-			const copy = Utils.copy(hero);
-			copy.state.heroicResource = copy.state.victories;
-			setHero(copy);
-			props.onChange(copy);
-		};
-
-		const endEncounter = () => {
-			const copy = Utils.copy(hero);
-			copy.state.heroicResource = 0;
-			copy.state.victories += 1;
-			setHero(copy);
-			props.onChange(copy);
-		};
-
-		return (
-			<Space direction='vertical' style={{ width: '100%' }}>
-				<NumberSpin
-					label={hero.class ? hero.class.heroicResource : 'Heroic Resource'}
-					value={hero.state.heroicResource}
-					min={hero.class && (hero.class.id === talent.id) ? undefined : 0}
-					onChange={setHeroicResource}
-				/>
-				<NumberSpin
-					label='Surges'
-					value={hero.state.surges}
-					min={0}
-					onChange={setSurges}
-				/>
-				{
-					hero.state.surges > 0 ?
-						<div>
-							<Alert
-								style={{ margin: '10px 0' }}
-								type='info'
-								showIcon={true}
-								message={`Spend 1 - 3 surges to add ${hero.class ? Math.max(...hero.class.characteristics.map(ch => ch.value)) : 0} damage per surge to one target.`}
-							/>
-							{
-								(hero.state.surges >= 2) ?
-									<Alert
-										style={{ margin: '10px 0' }}
-										type='info'
-										showIcon={true}
-										message='Spend 2 surges to increase an ability’s potency by 1 for a single target.'
-									/>
-									: null
-							}
-						</div>
-						: null
-				}
-				<NumberSpin
-					label='Victories'
-					value={hero.state.victories}
-					min={0}
-					onChange={setVictories}
-				/>
-				<NumberSpin
-					label='XP'
-					value={hero.state.xp}
-					min={0}
-					onChange={setXP}
-				/>
-				{
-					HeroLogic.canLevelUp(hero) ?
-						<Alert
-							style={{ margin: '10px 0' }}
-							type='info'
-							showIcon={true}
-							message='You have enough XP to level up.'
-							action={<Button type='text' title='Level Up' icon={<ArrowUpOutlined />} onClick={props.onLevelUp} />}
-						/>
-						: null
-				}
-				<Divider />
-				<Flex align='center' justify='space-between' gap='5px'>
-					<Button
-						className='tall-button'
-						type='primary'
-						block={true}
-						onClick={startEncounter}
-					>
-						<div>
-							<div>Start of Encounter</div>
-							<div className='subtext'>
-								Victories to {hero.class ? hero.class.heroicResource : 'Heroic Resource'}
-							</div>
-						</div>
-					</Button>
-					<Button
-						className='tall-button'
-						type='primary'
-						block={true}
-						onClick={endEncounter}
-					>
-						<div>
-							<div>End of Encounter</div>
-							<div className='subtext'>
-								Gain a Victory
-							</div>
-						</div>
-					</Button>
-				</Flex>
-			</Space>
-		);
-	};
-
-	const getVitalsSection = () => {
-		const setStaminaDamage = (value: number) => {
-			const copy = Utils.copy(hero);
-			copy.state.staminaDamage = value;
-			setHero(copy);
-			props.onChange(copy);
-		};
-
-		const setStaminaTemp = (value: number) => {
-			const copy = Utils.copy(hero);
-			copy.state.staminaTemp = value;
-			setHero(copy);
-			props.onChange(copy);
-		};
-
-		const setRecoveriesUsed = (value: number) => {
-			const copy = Utils.copy(hero);
-			copy.state.recoveriesUsed = value;
-			setHero(copy);
-			props.onChange(copy);
-		};
-
-		const endRespite = () => {
-			const copy = Utils.copy(hero);
-			copy.state.staminaDamage = 0;
-			copy.state.recoveriesUsed = 0;
-			copy.state.xp = copy.state.victories;
-			copy.state.victories = 0;
-			setHero(copy);
-			props.onChange(copy);
-		};
-
-		const spendRecovery = () => {
-			const copy = Utils.copy(hero);
-			copy.state.recoveriesUsed += 1;
-			copy.state.staminaDamage = Math.max(copy.state.staminaDamage - HeroLogic.getRecoveryValue(hero), 0);
-			setHero(copy);
-			props.onChange(copy);
-		};
-
-		return (
-			<Space direction='vertical' style={{ width: '100%' }}>
-				<HealthPanel hero={hero} />
-				<Divider />
-				<NumberSpin
-					label='Damage Taken'
-					value={hero.state.staminaDamage}
-					suffix={hero.state.staminaDamage > 0 ? `/ ${HeroLogic.getStamina(hero)}` : undefined}
-					min={0}
-					onChange={setStaminaDamage}
-				/>
-				<NumberSpin
-					label='Recoveries Used'
-					value={hero.state.recoveriesUsed}
-					suffix={hero.state.recoveriesUsed > 0 ? `/ ${HeroLogic.getRecoveries(hero)}` : undefined}
-					min={0}
-					max={HeroLogic.getRecoveries(hero)}
-					onChange={setRecoveriesUsed}
-				/>
-				{
-					hero.state.staminaDamage >= (HeroLogic.getStamina(hero) / 2) ?
-						<Alert
-							style={{ margin: '10px 0' }}
-							type='warning'
-							showIcon={true}
-							message='You are winded.'
-						/>
-						: null
-				}
-				<NumberSpin
-					label='Temporary Stamina'
-					value={hero.state.staminaTemp}
-					min={0}
-					onChange={setStaminaTemp}
-				/>
-				<Divider />
-				<Flex align='center' justify='space-between' gap='5px'>
-					<Button
-						className='tall-button'
-						type='primary'
-						block={true}
-						disabled={(hero.state.staminaDamage === 0) || (hero.state.recoveriesUsed >= HeroLogic.getRecoveries(hero))}
-						onClick={spendRecovery}
-					>
-						<div>
-							<div>Spend a Recovery</div>
-							<div className='subtext'>
-								Regain {HeroLogic.getRecoveryValue(hero)} Stamina
-							</div>
-						</div>
-					</Button>
-					<Button
-						className='tall-button'
-						type='primary'
-						block={true}
-						onClick={endRespite}
-					>
-						<div>
-							<div>Take a Respite</div>
-							<div className='subtext'>
-								24 hours of rest
-							</div>
-						</div>
-					</Button>
-				</Flex>
-			</Space>
-		);
-	};
-
-	const getStatisticsSection = () => {
 		const setHeroTokens = (value: number) => {
 			const copy = Utils.copy(hero);
 			copy.state.heroTokens = value;
@@ -312,40 +97,261 @@ export const HeroStateModal = (props: Props) => {
 			props.onChange(copy);
 		};
 
-		const setProjectPoints = (value: number) => {
+		const gainSurges = () => {
 			const copy = Utils.copy(hero);
-			copy.state.projectPoints = value;
+			copy.state.heroTokens -= 1;
+			copy.state.surges += 2;
+			setHero(copy);
+			props.onChange(copy);
+		};
+
+		const gainStamina = () => {
+			const copy = Utils.copy(hero);
+			copy.state.heroTokens -= 2;
+			copy.state.staminaDamage = Math.max(copy.state.staminaDamage - HeroLogic.getRecoveryValue(copy), 0);
+			setHero(copy);
+			props.onChange(copy);
+		};
+
+		const startEncounter = () => {
+			const copy = Utils.copy(hero);
+			copy.state.heroicResource = copy.state.victories;
+			setHero(copy);
+			props.onChange(copy);
+		};
+
+		const endEncounter = () => {
+			const copy = Utils.copy(hero);
+			copy.state.heroicResource = 0;
+			copy.state.victories += 1;
+			copy.state.surges = 0;
 			setHero(copy);
 			props.onChange(copy);
 		};
 
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
+				<Flex gap={20}>
+					<Space direction='vertical' style={{ width: '100%' }}>
+						<NumberSpin
+							label={hero.class ? hero.class.heroicResource : 'Heroic Resource'}
+							value={hero.state.heroicResource}
+							min={hero.class && (hero.class.id === talent.id) ? undefined : 0}
+							onChange={setHeroicResource}
+						/>
+						<NumberSpin
+							label='Victories'
+							value={hero.state.victories}
+							min={0}
+							onChange={setVictories}
+						/>
+						<NumberSpin
+							label='Renown'
+							value={hero.state.renown}
+							format={() => HeroLogic.getRenown(hero).toString()}
+							onChange={setRenown}
+						/>
+					</Space>
+					<Space direction='vertical' style={{ width: '100%' }}>
+						<NumberSpin
+							label='Surges'
+							value={hero.state.surges}
+							min={0}
+							onChange={setSurges}
+						/>
+						<NumberSpin
+							label='XP'
+							value={hero.state.xp}
+							min={0}
+							onChange={setXP}
+						/>
+						<NumberSpin
+							label='Wealth'
+							value={hero.state.wealth}
+							format={() => HeroLogic.getWealth(hero).toString()}
+							onChange={setWealth}
+						/>
+					</Space>
+				</Flex>
+				{
+					hero.state.surges > 0 ?
+						<Alert
+							type='info'
+							showIcon={true}
+							message={`Spend 1 - 3 surges to add ${hero.class ? Math.max(...hero.class.characteristics.map(ch => ch.value)) : 0} damage per surge to one target.`}
+						/>
+						: null
+				}
+				{
+					hero.state.surges >= 2 ?
+						<Alert
+							type='info'
+							showIcon={true}
+							message='Spend 2 surges to increase an ability’s potency by 1 for a single target.'
+						/>
+						: null
+				}
+				{
+					HeroLogic.canLevelUp(hero) ?
+						<Alert
+							type='info'
+							showIcon={true}
+							message='You have enough XP to level up.'
+							action={props.onLevelUp ? <Button type='text' title='Level Up' icon={<ArrowUpOutlined />} onClick={props.onLevelUp} /> : null}
+						/>
+						: null
+				}
+				<Divider />
 				<NumberSpin
 					label='Hero Tokens'
 					value={hero.state.heroTokens}
 					min={0}
 					onChange={setHeroTokens}
 				/>
-				<NumberSpin
-					label='Renown'
-					value={hero.state.renown}
-					min={0}
-					onChange={setRenown}
+				<Alert
+					type='info'
+					showIcon={true}
+					message='Hero tokens are a resource shared by your party; they typically refresh at the beginning of each game session.'
 				/>
-				<NumberSpin
-					label='Wealth'
-					value={hero.state.wealth}
-					min={1}
-					onChange={setWealth}
-				/>
-				<NumberSpin
-					label='Project Points'
-					value={hero.state.projectPoints}
-					min={0}
-					steps={[ 1, 10 ]}
-					onChange={setProjectPoints}
-				/>
+				{
+					hero.state.heroTokens > 0 ?
+						<Alert
+							type='info'
+							showIcon={true}
+							message={'Spend a hero token to gain two surges.'}
+							action={<Button onClick={gainSurges}>+2 Surges</Button>}
+						/>
+						: null
+				}
+				{
+					hero.state.heroTokens > 0 ?
+						<Alert
+							type='info'
+							showIcon={true}
+							message={'Spend a hero token when you: (a) fail a saving throw to succeed on it instead; (b) fail a test or succeed on a test with a consequence to turn the failure into a success and to lose any consequence suffered.'}
+						/>
+						: null
+				}
+				{
+					hero.state.heroTokens >= 2 ?
+						<Alert
+							type='info'
+							showIcon={true}
+							message={'Spend 2 hero tokens on your turn or whenever you take damage (no action required) to regain Stamina equal to your Recovery value without spending a Recovery.'}
+							action={
+								<div style={{ margin: '10px 0' }}>
+									<Field
+										orientation='vertical'
+										label='Stamina'
+										value={`${HeroLogic.getStamina(hero) - hero.state.staminaDamage} / ${HeroLogic.getStamina(hero)}`}
+									/>
+									<Button disabled={hero.state.staminaDamage === 0} onClick={gainStamina}>+{HeroLogic.getRecoveryValue(hero)} Stamina</Button>
+								</div>
+							}
+						/>
+						: null
+				}
+				<Divider />
+				<Flex align='center' justify='space-evenly' gap={10}>
+					<Button
+						key='start-encounter'
+						style={{ flex: '1 1 0' }}
+						className='tall-button'
+						onClick={startEncounter}
+					>
+						<div>
+							<div>Start Encounter</div>
+							<div className='subtext'>
+								Victories to {hero.class ? hero.class.heroicResource : 'Heroic Resource'}
+							</div>
+						</div>
+					</Button>
+					<Button
+						key='end-encounter'
+						style={{ flex: '1 1 0' }}
+						className='tall-button'
+						onClick={endEncounter}
+					>
+						<div>
+							<div>End Encounter</div>
+							<div className='subtext'>
+								+1 Victory
+							</div>
+						</div>
+					</Button>
+				</Flex>
+			</Space>
+		);
+	};
+
+	const getVitalsSection = () => {
+		const onHeroChange = (h: Hero) => {
+			setHero(h);
+			props.onChange(h);
+		};
+
+		return (
+			<HeroHealthPanel
+				hero={hero}
+				showEncounterControls={props.showEncounterControls}
+				onChange={onHeroChange}
+			/>
+		);
+	};
+
+	const getRespiteSection = () => {
+		const takeRespite = () => {
+			const copy = Utils.copy(hero);
+			HeroLogic.takeRespite(copy);
+			setHero(copy);
+			props.onChange(copy);
+		};
+
+		return (
+			<Space direction='vertical' style={{ width: '100%' }}>
+				<HeaderText>Respite</HeaderText>
+				<div className='ds-text'>
+					Taking a respite has the following effects:
+				</div>
+				<ul>
+					<li>
+						Your Stamina and Recoveries are reset (and any temporary Stamina goes away)
+					</li>
+					<li>
+						Your Victories are turned into XP
+					</li>
+					<li>
+						Any conditions affecting you are removed
+					</li>
+				</ul>
+				<div className='ds-text'>
+					During a respite you can take one respite action. Standard respite actions are:
+				</div>
+				<ul>
+					<li>
+						Make a project roll
+					</li>
+					<li>
+						Change your kit / prayer / enchantment / augmentation / ward
+					</li>
+					<li>
+						Attract followers (for every 3 renown, you can have 1 follower)
+					</li>
+				</ul>
+				<Divider />
+				<Button
+					key='take-respite'
+					block={true}
+					className='tall-button'
+					onClick={takeRespite}
+				>
+					<div>
+						<div>Take a Respite</div>
+						<div className='subtext'>
+							24 hours of rest
+						</div>
+					</div>
+				</Button>
 			</Space>
 		);
 	};
@@ -382,21 +388,37 @@ export const HeroStateModal = (props: Props) => {
 			props.onChange(copy);
 		};
 
+		let warning = null;
+		const leveled = hero.state.inventory.filter(i => [ ItemType.Leveled, ItemType.LeveledArmor, ItemType.LeveledImplement, ItemType.LeveledWeapon ].includes(i.type));
+		if (leveled.length > 3) {
+			warning = (
+				<Alert
+					type='warning'
+					showIcon={true}
+					message='You can only use 3 leveled items at a time.'
+				/>
+			);
+		}
+
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
+				<HeaderText>Inventory</HeaderText>
+				{warning}
 				{
 					hero.state.inventory.map(item => (
 						<Expander
 							key={item.id}
 							title={item.count === 1 ? item.name : `${item.name} (x${item.count})`}
+							tags={[ item.type ]}
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveItem(item, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveItem(item, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteItem(item); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteItem(item); }} />
 							]}
 						>
 							<ItemPanel
 								item={item}
+								options={props.options}
 								hero={hero}
 								mode={PanelMode.Full}
 								onChange={changeItem}
@@ -406,18 +428,18 @@ export const HeroStateModal = (props: Props) => {
 				}
 				{
 					hero.state.inventory.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='Your inventory is empty.'
-						/>
+						<Empty text='Your inventory is empty.' />
 						: null
 				}
-				<Button block={true} onClick={() => setShopVisible(true)}>Add a new item</Button>
-				<Drawer open={shopVisible} closeIcon={null} width='500px'>
+				<Button block={true} onClick={() => setShopVisible(true)}>
+					<PlusOutlined />
+					Add a new item
+				</Button>
+				<Drawer open={shopVisible} onClose={() => setShopVisible(false)} closeIcon={null} width='500px'>
 					<ItemSelectModal
 						types={[ ItemType.Artifact, ItemType.Consumable, ItemType.ImbuedArmor, ItemType.ImbuedImplement, ItemType.ImbuedWeapon, ItemType.Leveled, ItemType.LeveledArmor, ItemType.LeveledImplement, ItemType.LeveledWeapon, ItemType.Trinket ]}
 						sourcebooks={props.sourcebooks}
+						options={props.options}
 						hero={hero}
 						onSelect={addItem}
 						onClose={() => setShopVisible(false)}
@@ -427,67 +449,14 @@ export const HeroStateModal = (props: Props) => {
 		);
 	};
 
-	const getConditionsSection = () => {
-		const addCondition = (type: ConditionType) => {
-			const copy = Utils.copy(hero);
-			copy.state.conditions.push({
-				id: Utils.guid(),
-				type: type,
-				text: '',
-				ends: ConditionEndType.EndOfTurn
-			});
-			setHero(copy);
-			setConditionsVisible(false);
-			props.onChange(copy);
-		};
-
-		const editCondition = (condition: Condition) => {
-			const copy = Utils.copy(hero);
-			const index = copy.state.conditions.findIndex(c => c.id === condition.id);
-			if (index !== -1) {
-				copy.state.conditions[index] = condition;
-				setHero(copy);
-				props.onChange(copy);
-			}
-		};
-
-		const deleteCondition = (condition: Condition) => {
-			const copy = Utils.copy(hero);
-			copy.state.conditions = copy.state.conditions.filter(c => c.id !== condition.id);
-			setHero(copy);
-			props.onChange(copy);
-		};
-
-		return (
-			<Space direction='vertical' style={{ width: '100%' }}>
-				{
-					hero.state.conditions.map(c => (
-						<ConditionPanel
-							key={c.id}
-							condition={c}
-							onChange={editCondition}
-							onDelete={deleteCondition}
-						/>
-					))
-				}
-				{
-					hero.state.conditions.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='You are not affected by any conditions.'
-						/>
-						: null
-				}
-				<Button block={true} onClick={() => setConditionsVisible(true)}>Add a new condition</Button>
-				<Drawer open={conditionsVisible} closeIcon={null} width='500px'>
-					<ConditionSelectModal onSelect={addCondition} onClose={() => setConditionsVisible(false)} />
-				</Drawer>
-			</Space>
-		);
-	};
-
 	const getProjectsSection = () => {
+		const setProjectPoints = (value: number) => {
+			const copy = Utils.copy(hero);
+			copy.state.projectPoints = value;
+			setHero(copy);
+			props.onChange(copy);
+		};
+
 		const addProject = (project: Project) => {
 			const projectCopy = Utils.copy(project);
 			projectCopy.id = Utils.guid();
@@ -525,6 +494,15 @@ export const HeroStateModal = (props: Props) => {
 
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
+				<HeaderText>Projects</HeaderText>
+				<NumberSpin
+					label='Project Points'
+					value={hero.state.projectPoints}
+					steps={[ 1, 10 ]}
+					format={() => HeroLogic.getProjectPoints(hero).toString()}
+					onChange={setProjectPoints}
+				/>
+				<Divider />
 				{
 					hero.state.projects.map(project => (
 						<Expander
@@ -533,7 +511,7 @@ export const HeroStateModal = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveProject(project, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveProject(project, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteProject(project); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteProject(project); }} />
 							]}
 						>
 							<ProjectPanel
@@ -546,15 +524,14 @@ export const HeroStateModal = (props: Props) => {
 				}
 				{
 					hero.state.projects.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='You have no projects underway.'
-						/>
+						<Empty text='You have no projects underway.' />
 						: null
 				}
-				<Button block={true} onClick={() => setProjectsVisible(true)}>Add a new project</Button>
-				<Drawer open={projectsVisible} closeIcon={null} width='500px'>
+				<Button block={true} onClick={() => setProjectsVisible(true)}>
+					<PlusOutlined />
+					Add a new project
+				</Button>
+				<Drawer open={projectsVisible} onClose={() => setProjectsVisible(false)} closeIcon={null} width='500px'>
 					<ProjectSelectModal sourcebooks={props.sourcebooks} onSelect={addProject} onClose={() => setProjectsVisible(false)} />
 				</Drawer>
 			</Space>
@@ -588,12 +565,10 @@ export const HeroStateModal = (props: Props) => {
 				return getHeroSection();
 			case HeroStatePage.Vitals:
 				return getVitalsSection();
-			case HeroStatePage.Stats:
-				return getStatisticsSection();
+			case HeroStatePage.Respite:
+				return getRespiteSection();
 			case HeroStatePage.Inventory:
 				return getInventorySection();
-			case HeroStatePage.Conditions:
-				return getConditionsSection();
 			case HeroStatePage.Projects:
 				return getProjectsSection();
 			case HeroStatePage.Notes:
@@ -602,21 +577,30 @@ export const HeroStateModal = (props: Props) => {
 	};
 
 	try {
+		let pages: HeroStatePage[] = [];
+		if (HeroLogic.getStamina(hero) !== 0) {
+			pages = [
+				HeroStatePage.Hero,
+				HeroStatePage.Vitals,
+				HeroStatePage.Respite,
+				HeroStatePage.Inventory,
+				HeroStatePage.Projects,
+				HeroStatePage.Notes
+			];
+		} else {
+			pages = [
+				HeroStatePage.Vitals,
+				HeroStatePage.Notes
+			];
+		}
+
 		return (
 			<Modal
 				toolbar={
 					<div style={{ width: '100%', textAlign: 'center' }}>
 						<Segmented
 							name='tabs'
-							options={[
-								HeroStatePage.Hero,
-								HeroStatePage.Vitals,
-								HeroStatePage.Stats,
-								HeroStatePage.Inventory,
-								HeroStatePage.Conditions,
-								HeroStatePage.Projects,
-								HeroStatePage.Notes
-							]}
+							options={pages}
 							value={page}
 							onChange={setPage}
 						/>

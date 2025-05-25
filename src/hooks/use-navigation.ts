@@ -45,6 +45,12 @@ export const useNavigation = () => {
 		},
 		goToPlaybookEdit: (kind: PlaybookElementKind, elementID: string) => {
 			return navigate(`/playbook/edit/${kind}/${elementID}`);
+		},
+		goToSession: () => {
+			return navigate('/session/director');
+		},
+		goToPlayerView: () => {
+			return navigate('/session/player');
 		}
 	};
 };

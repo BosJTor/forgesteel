@@ -309,11 +309,23 @@ export class SourcebookLogic {
 		}
 
 		sourcebook.classes.forEach(c => {
+			if (c.primaryCharacteristicsOptions === undefined) {
+				c.primaryCharacteristicsOptions = [];
+			}
+
 			c.featuresByLevel.forEach(lvl => {
 				lvl.features
 					.filter(f => f.type === FeatureType.ClassAbility)
 					.forEach(f => {
 						f.data.minLevel = 1;
+					});
+				lvl.features
+					.filter(f => f.type === FeatureType.Kit)
+					.forEach(f => {
+						if (f.data.types.includes('Standard')) {
+							f.data.types = f.data.types.filter(t => t !== 'Standard');
+							f.data.types.push('');
+						}
 					});
 			});
 
@@ -323,6 +335,14 @@ export class SourcebookLogic {
 						.filter(f => f.type === FeatureType.ClassAbility)
 						.forEach(f => {
 							f.data.minLevel = 1;
+						});
+					lvl.features
+						.filter(f => f.type === FeatureType.Kit)
+						.forEach(f => {
+							if (f.data.types.includes('Standard')) {
+								f.data.types = f.data.types.filter(t => t !== 'Standard');
+								f.data.types.push('');
+							}
 						});
 				});
 			});
@@ -343,7 +363,10 @@ export class SourcebookLogic {
 						staminaDamage: 0,
 						staminaTemp: 0,
 						conditions: [],
-						reactionUsed: false
+						reactionUsed: false,
+						hidden: false,
+						defeated: false,
+						captainID: undefined
 					};
 				}
 
@@ -378,6 +401,21 @@ export class SourcebookLogic {
 						features: []
 					}
 				];
+			}
+		});
+
+		sourcebook.kits.forEach(kit => {
+			if (kit.type === 'Standard') {
+				kit.type = '';
+			}
+		});
+
+		sourcebook.terrain.forEach(terrain => {
+			if (terrain.state === undefined) {
+				terrain.state = {
+					squares: 1,
+					staminaDamage: 0
+				};
 			}
 		});
 	};

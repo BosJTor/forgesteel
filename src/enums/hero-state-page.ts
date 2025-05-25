@@ -1,9 +1,8 @@
 export enum HeroStatePage {
 	Hero = 'Hero',
 	Vitals = 'Vitals',
-	Stats = 'Stats',
+	Respite = 'Respite',
 	Inventory = 'Inventory',
-	Conditions = 'Conditions',
 	Projects = 'Projects',
 	Notes = 'Notes'
 }

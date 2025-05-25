@@ -1,8 +1,10 @@
-import { Button, Popover } from 'antd';
-import { CloseOutlined, EditOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Divider, Popover, Segmented } from 'antd';
+import { CloseOutlined, CopyOutlined, DownOutlined, EditOutlined, SettingOutlined, ToolOutlined, UploadOutlined } from '@ant-design/icons';
 import { Monster, MonsterGroup } from '../../../../models/monster';
+import { useMemo, useState } from 'react';
 import { Ability } from '../../../../models/ability';
 import { Ancestry } from '../../../../models/ancestry';
+import { AppFooter } from '../../../panels/app-footer/app-footer';
 import { AppHeader } from '../../../panels/app-header/app-header';
 import { Career } from '../../../../models/career';
 import { Characteristic } from '../../../../enums/characteristic';
@@ -10,6 +12,7 @@ import { Complication } from '../../../../models/complication';
 import { Culture } from '../../../../models/culture';
 import { DangerButton } from '../../../controls/danger-button/danger-button';
 import { Domain } from '../../../../models/domain';
+import { ErrorBoundary } from '../../../controls/error-boundary/error-boundary';
 import { Hero } from '../../../../models/hero';
 import { HeroClass } from '../../../../models/class';
 import { HeroPanel } from '../../../panels/hero/hero-panel';
@@ -18,8 +21,9 @@ import { Kit } from '../../../../models/kit';
 import { Options } from '../../../../models/options';
 import { OptionsPanel } from '../../../panels/options/options-panel';
 import { PanelMode } from '../../../../enums/panel-mode';
+import { RulesPage } from '../../../../enums/rules-page';
 import { Sourcebook } from '../../../../models/sourcebook';
-import { useMemo } from 'react';
+import { StandardAbilitiesPanel } from '../../../panels/standard-abilities/standard-abilities-panel';
 import { useNavigation } from '../../../../hooks/use-navigation';
 import { useParams } from 'react-router';
 
@@ -32,9 +36,12 @@ interface Props {
 	showDirectory: () => void;
 	showAbout: () => void;
 	showRoll: () => void;
+	showReference: (hero: Hero, page?: RulesPage) => void;
 	setOptions: (options: Options) => void;
 	exportHero: (hero: Hero, format: 'image' | 'pdf' | 'json') => void;
 	exportHeroPDF: (hero: Hero, format: 'portrait' | 'landscape') => void;
+	exportStandardAbilities: (format: 'image' | 'pdf') => void;
+	copyHero: (hero: Hero) => void;
 	deleteHero: (hero: Hero) => void;
 	showAncestry: (ancestry: Ancestry) => void;
 	showCulture: (culture: Culture) => void;
@@ -47,12 +54,12 @@ interface Props {
 	showCharacteristic: (characteristic: Characteristic, hero: Hero) => void;
 	showAbility: (ability: Ability, hero: Hero) => void;
 	showHeroState: (hero: Hero, page: HeroStatePage) => void;
-	showRules: (hero: Hero) => void;
 }
 
 export const HeroViewPage = (props: Props) => {
 	const navigation = useNavigation();
 	const { heroID } = useParams<{ heroID: string }>();
+	const [ content, setContent ] = useState<'hero' | 'standard'>('hero');
 	const hero = useMemo(
 		() => props.heroes.find(h => h.id === heroID)!,
 		[ heroID, props.heroes ]
@@ -73,74 +80,116 @@ export const HeroViewPage = (props: Props) => {
 			}
 		};
 
+		const getContent = () => {
+			switch (content) {
+				case 'hero':
+					return (
+						<HeroPanel
+							hero={hero}
+							sourcebooks={props.sourcebooks}
+							options={props.options}
+							mode={PanelMode.Full}
+							onSelectAncestry={props.showAncestry}
+							onSelectCulture={props.showCulture}
+							onSelectCareer={props.showCareer}
+							onSelectClass={props.showClass}
+							onSelectComplication={props.showComplication}
+							onSelectDomain={props.showDomain}
+							onSelectKit={props.showKit}
+							onSelectCompanion={props.showCompanion}
+							onSelectCharacteristic={characteristic => props.showCharacteristic(characteristic, hero)}
+							onSelectAbility={ability => props.showAbility(ability, hero)}
+							onShowState={page => props.showHeroState(hero, page)}
+							onshowReference={page => props.showReference(hero, page)}
+						/>
+					);
+				case 'standard':
+					return (
+						<StandardAbilitiesPanel hero={hero} />
+					);
+			}
+		};
+
 		return (
-			<div className='hero-view-page'>
-				<AppHeader subheader='Hero' showDirectory={props.showDirectory} showAbout={props.showAbout} showRoll={props.showRoll}>
-					<Button icon={<CloseOutlined />} onClick={() => navigation.goToHeroList(hero.folder)}>
-						Close
-					</Button>
-					<div className='divider' />
-					<Button icon={<EditOutlined />} onClick={() => navigation.goToHeroEdit(heroID!, 'details')}>
-						Edit
-					</Button>
-					<Popover
-						trigger='click'
-						placement='bottom'
-						content={(
-							<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-								<Button onClick={() => exportHero('image')}>Export As Image</Button>
-								<Button onClick={() => exportHero('pdf-portrait')}>Export As PDF (portrait)</Button>
-								<Button onClick={() => exportHero('pdf-landscape')}>Export As PDF (landscape)</Button>
-								<Button onClick={() => exportHero('json')}>Export As Data</Button>
-							</div>
-						)}
-					>
-						<Button icon={<UploadOutlined />}>
-							Export
+			<ErrorBoundary>
+				<div className='hero-view-page'>
+					<AppHeader subheader='Hero' showDirectory={props.showDirectory}>
+						<Button icon={<CloseOutlined />} onClick={() => navigation.goToHeroList(hero.folder)}>
+							Close
 						</Button>
-					</Popover>
-					<DangerButton block={true} onConfirm={() => props.deleteHero(hero)} />
-					<div className='divider' />
-					<Button onClick={() => props.showHeroState(hero, HeroStatePage.Hero)}>
-						State
-					</Button>
-					<Button onClick={() => props.showRules(hero)}>
-						Rules
-					</Button>
-					<Popover
-						trigger='click'
-						placement='bottom'
-						content={(
-							<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-								<OptionsPanel mode='hero' options={props.options} setOptions={props.setOptions} />
-							</div>
-						)}
-					>
-						<Button icon={<SettingOutlined />}>
-							Options
+						<div className='divider' />
+						<Button icon={<EditOutlined />} onClick={() => navigation.goToHeroEdit(heroID!, 'details')}>
+							Edit
 						</Button>
-					</Popover>
-				</AppHeader>
-				<div className='hero-view-page-content'>
-					<HeroPanel
-						hero={hero}
-						sourcebooks={props.sourcebooks}
-						options={props.options}
-						mode={PanelMode.Full}
-						onSelectAncestry={props.showAncestry}
- 						onSelectCulture={props.showCulture}
- 						onSelectCareer={props.showCareer}
- 						onSelectClass={props.showClass}
- 						onSelectComplication={props.showComplication}
- 						onSelectDomain={props.showDomain}
- 						onSelectKit={props.showKit}
-						onSelectCompanion={props.showCompanion}
- 						onSelectCharacteristic={characteristic => props.showCharacteristic(characteristic, hero)}
- 						onSelectAbility={ability => props.showAbility(ability, hero)}
- 						onShowState={page => props.showHeroState(hero, page)}
-					/>
+						<Button icon={<CopyOutlined />} onClick={() => props.copyHero(hero)}>
+							Copy
+						</Button>
+						<Popover
+							trigger='click'
+							content={(
+								<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+									<Segmented
+										options={[
+											{ value: 'hero', label: 'Hero Sheet' },
+											{ value: 'standard', label: 'Standard Abilities' }
+										]}
+										value={content}
+										onChange={setContent}
+									/>
+									<Divider />
+									{
+										content === 'hero' ?
+											<>
+												<Button onClick={() => exportHero('image')}>Export As Image</Button>
+												<Button onClick={() => exportHero('pdf-portrait')}>Export As PDF (portrait)</Button>
+												<Button onClick={() => exportHero('pdf-landscape')}>Export As PDF (landscape)</Button>
+												<Button onClick={() => exportHero('json')}>Export As Data</Button>
+											</>
+											: null
+									}
+									{
+										content === 'standard' ?
+											<>
+												<Button onClick={() => props.exportStandardAbilities('image')}>Export As Image</Button>
+												<Button onClick={() => props.exportStandardAbilities('pdf')}>Export As PDF</Button>
+											</>
+											: null
+									}
+								</div>
+							)}
+						>
+							<Button icon={<UploadOutlined />}>
+								Export
+								<DownOutlined />
+							</Button>
+						</Popover>
+						<DangerButton
+							mode='block'
+							onConfirm={() => props.deleteHero(hero)}
+						/>
+						<div className='divider' />
+						<Button
+							icon={<ToolOutlined />}
+							onClick={() => props.showHeroState ? props.showHeroState(hero, HeroStatePage.Hero) : null}
+						>
+							Manage
+						</Button>
+						<Popover
+							trigger='click'
+							content={<OptionsPanel mode='hero' options={props.options} heroes={props.heroes} setOptions={props.setOptions} />}
+						>
+							<Button icon={<SettingOutlined />}>
+								Options
+								<DownOutlined />
+							</Button>
+						</Popover>
+					</AppHeader>
+					<div className='hero-view-page-content'>
+						{getContent()}
+					</div>
+					<AppFooter page='heroes' showAbout={props.showAbout} showRoll={props.showRoll} showReference={() => props.showReference(hero)} />
 				</div>
-			</div>
+			</ErrorBoundary>
 		);
 	} catch (ex) {
 		console.error(ex);

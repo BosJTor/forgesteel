@@ -7,8 +7,5 @@ export interface Negotiation extends Element {
 	patience: number;
 	motivations: { trait: NegotiationTrait, description: string }[];
 	pitfalls: { trait: NegotiationTrait, description: string }[];
-	state: {
-		deltaInterest: number;
-		deltaPatience: number;
-	}
+	outcomes: string[];
 }

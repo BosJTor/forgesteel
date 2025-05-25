@@ -4,7 +4,6 @@ import { Characteristic } from '../../enums/characteristic';
 import { FactoryLogic } from '../../logic/factory-logic';
 import { FeatureField } from '../../enums/feature-field';
 import { HeroClass } from '../../models/class';
-import { KitType } from '../../enums/kit-type';
 import { PerkList } from '../../enums/perk-list';
 import { SkillList } from '../../enums/skill-list';
 
@@ -18,7 +17,10 @@ As a fury, you have abilities that deal a lot of damage, move you around the bat
 	heroicResource: 'Rage',
 	subclassName: 'Primordial Aspect',
 	subclassCount: 1,
-	primaryCharacteristics: [ Characteristic.Might, Characteristic.Agility ],
+	primaryCharacteristicsOptions: [
+		[ Characteristic.Might, Characteristic.Agility ]
+	],
+	primaryCharacteristics: [],
 	featuresByLevel: [
 		{
 			level: 1,
@@ -34,9 +36,10 @@ As a fury, you have abilities that deal a lot of damage, move you around the bat
 					field: FeatureField.Recoveries,
 					value: 10
 				}),
-				FactoryLogic.feature.createSkill({
+				FactoryLogic.feature.createSkillChoice({
 					id: 'fury-1-1',
-					skill: 'Nature'
+					listOptions: [ SkillList.Lore ],
+					selected: [ 'Nature' ]
 				}),
 				FactoryLogic.feature.createSkillChoice({
 					id: 'fury-1-2',
@@ -341,9 +344,10 @@ As a fury, you have abilities that deal a lot of damage, move you around the bat
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'fury-sub-1-1-1',
-							skill: 'Lift'
+							listOptions: [ SkillList.Exploration ],
+							selected: [ 'Lift' ]
 						}),
 						FactoryLogic.feature.createKitChoice({
 							id: 'fury-sub-1-1-2'
@@ -462,9 +466,10 @@ Additionally, you make one power roll that targets each enemy you come adjacent 
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'fury-sub-2-1-1',
-							skill: 'Hide'
+							listOptions: [ SkillList.Intrigue ],
+							selected: [ 'Hide' ]
 						}),
 						FactoryLogic.feature.createKitChoice({
 							id: 'fury-sub-2-1-2'
@@ -590,14 +595,15 @@ As your rage grows, your primordial cunning intensifies. Benefits are cumulative
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'fury-sub-3-1-1',
-							skill: 'Track'
+							listOptions: [ SkillList.Intrigue ],
+							selected: [ 'Track' ]
 						}),
 						FactoryLogic.feature.createKitChoice({
 							id: 'fury-sub-3-1-2',
 							name: 'Beast Shape',
-							types: [ KitType.Standard, KitType.Stormwight ]
+							types: [ 'Stormwight' ]
 						}),
 						FactoryLogic.feature.create({
 							id: 'fury-sub-3-1-3',

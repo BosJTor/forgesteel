@@ -17,7 +17,10 @@ You’re at your best against the strongest foes. Your judgments terrify heretic
 	heroicResource: 'Wrath',
 	subclassName: 'Order',
 	subclassCount: 1,
-	primaryCharacteristics: [ Characteristic.Might, Characteristic.Presence ],
+	primaryCharacteristicsOptions: [
+		[ Characteristic.Might, Characteristic.Presence ]
+	],
+	primaryCharacteristics: [],
 	featuresByLevel: [
 		{
 			level: 1,
@@ -397,9 +400,10 @@ In addition, you can spend 1 wrath to take one of the following free triggered a
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'censor-sub-1-1-1',
-							skill: 'Read Person'
+							listOptions: [ SkillList.Interpersonal ],
+							selected: [ 'Read Person' ]
 						}),
 						FactoryLogic.feature.create({
 							id: 'censor-sub-1-1-2',
@@ -481,9 +485,10 @@ In addition, you can spend 1 wrath to take one of the following free triggered a
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'censor-sub-2-1-1',
-							skill: 'Magic'
+							listOptions: [ SkillList.Lore ],
+							selected: [ 'Magic' ]
 						}),
 						FactoryLogic.feature.create({
 							id: 'censor-sub-2-1-2',
@@ -559,9 +564,10 @@ In addition, you can spend 1 wrath to take one of the following free triggered a
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'censor-sub-3-1-1',
-							skill: 'Lead'
+							listOptions: [ SkillList.Interpersonal ],
+							selected: [ 'Lead' ]
 						}),
 						FactoryLogic.feature.create({
 							id: 'censor-sub-3-1-2',

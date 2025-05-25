@@ -1,7 +1,8 @@
 import { Ability, AbilityDistance, AbilityType } from '../models/ability';
-import { Encounter, EncounterGroup, EncounterSlot } from '../models/encounter';
-import { Feature, FeatureAbility, FeatureAbilityCost, FeatureAbilityData, FeatureAddOn, FeatureAddOnType, FeatureAncestryChoice, FeatureAncestryFeatureChoice, FeatureBonus, FeatureCharacteristicBonus, FeatureChoice, FeatureClassAbility, FeatureCompanion, FeatureDamageModifier, FeatureDomain, FeatureDomainFeature, FeatureItemChoice, FeatureKit, FeatureKitType, FeatureLanguage, FeatureLanguageChoice, FeatureMalice, FeatureMultiple, FeaturePackage, FeaturePerk, FeatureSize, FeatureSkill, FeatureSkillChoice, FeatureSpeed, FeatureText, FeatureTitleChoice } from '../models/feature';
+import { Encounter, EncounterGroup, EncounterObjective, EncounterSlot } from '../models/encounter';
+import { Feature, FeatureAbility, FeatureAbilityCost, FeatureAbilityDamage, FeatureAbilityData, FeatureAbilityDistance, FeatureAddOn, FeatureAddOnType, FeatureAncestryChoice, FeatureAncestryFeatureChoice, FeatureBonus, FeatureCharacteristicBonus, FeatureChoice, FeatureClassAbility, FeatureCompanion, FeatureConditionImmunity, FeatureDamageModifier, FeatureDomain, FeatureDomainFeature, FeatureItemChoice, FeatureKit, FeatureLanguage, FeatureLanguageChoice, FeatureMalice, FeatureMultiple, FeaturePackage, FeaturePerk, FeatureSize, FeatureSkill, FeatureSkillChoice, FeatureSpeed, FeatureTaggedFeature, FeatureTaggedFeatureChoice, FeatureText, FeatureTitleChoice } from '../models/feature';
 import { Kit, KitDamageBonus } from '../models/kit';
+import { MapFog, MapMini, MapTile, MapWall, MapZone, TacticalMap } from '../models/tactical-map';
 import { Monster, MonsterGroup, MonsterRole } from '../models/monster';
 import { MonsterFilter, TerrainFilter } from '../models/filter';
 import { Montage, MontageChallenge, MontageSection } from '../models/montage';
@@ -15,9 +16,11 @@ import { Ancestry } from '../models/ancestry';
 import { Career } from '../models/career';
 import { Characteristic } from '../enums/characteristic';
 import { Complication } from '../models/complication';
+import { ConditionType } from '../enums/condition-type';
 import { Culture } from '../models/culture';
 import { DamageModifier } from '../models/damage-modifier';
 import { DamageModifierType } from '../enums/damage-modifier-type';
+import { DamageType } from '../enums/damage-type';
 import { Domain } from '../models/domain';
 import { Element } from '../models/element';
 import { FeatureField } from '../enums/feature-field';
@@ -29,7 +32,6 @@ import { HeroClass } from '../models/class';
 import { Item } from '../models/item';
 import { ItemType } from '../enums/item-type';
 import { KitArmor } from '../enums/kit-armor';
-import { KitType } from '../enums/kit-type';
 import { KitWeapon } from '../enums/kit-weapon';
 import { MonsterLogic } from './monster-logic';
 import { MonsterOrganizationType } from '../enums/monster-organization-type';
@@ -91,7 +93,10 @@ export class FactoryLogic {
 				conditions: [],
 				inventory: [],
 				projects: [],
-				notes: ''
+				notes: '',
+				encounterState: 'ready',
+				hidden: false,
+				defeated: false
 			},
 			abilityCustomizations: []
 		};
@@ -126,7 +131,10 @@ export class FactoryLogic {
 			adventures: [],
 			encounters: [],
 			montages: [],
-			negotiations: []
+			negotiations: [],
+			tacticalMaps: [],
+			counters: [],
+			playerViewID: null
 		};
 	};
 
@@ -172,6 +180,7 @@ export class FactoryLogic {
 			heroicResource: '',
 			subclassName: '',
 			subclassCount: 1,
+			primaryCharacteristicsOptions: [],
 			primaryCharacteristics: [],
 			featuresByLevel: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ].map(n => ({ level: n, features: [] })),
 			abilities: [],
@@ -215,7 +224,7 @@ export class FactoryLogic {
 			id: Utils.guid(),
 			name: '',
 			description: '',
-			type: KitType.Standard,
+			type: '',
 			armor: [],
 			weapon: [],
 			stamina: 0,
@@ -268,7 +277,11 @@ export class FactoryLogic {
 			size: '',
 			damageMods: [],
 			sections: [],
-			upgrades: []
+			upgrades: [],
+			state: {
+				squares: 1,
+				staminaDamage: 0
+			}
 		};
 	};
 
@@ -431,7 +444,10 @@ export class FactoryLogic {
 				staminaDamage: 0,
 				staminaTemp: 0,
 				conditions: [],
-				reactionUsed: false
+				reactionUsed: false,
+				hidden: false,
+				defeated: false,
+				captainID: undefined
 			}
 		};
 	};
@@ -460,6 +476,7 @@ export class FactoryLogic {
 	static createMonsterFilter = (minLevel: number, maxLevel: number): MonsterFilter => {
 		return {
 			name: '',
+			keywords: [],
 			roles: [],
 			organizations: [],
 			level: [ minLevel, maxLevel ],
@@ -485,14 +502,20 @@ export class FactoryLogic {
 			description: '',
 			groups: [],
 			terrain: [],
-			malice: 0
+			objective: null,
+			notes: [],
+			initiative: undefined,
+			round: 0,
+			malice: 0,
+			heroes: []
 		};
 	};
 
 	static createEncounterGroup = (): EncounterGroup => {
 		return {
 			id: Utils.guid(),
-			slots: []
+			slots: [],
+			encounterState: 'ready'
 		};
 	};
 
@@ -505,7 +528,28 @@ export class FactoryLogic {
 			customization: {
 				addOnIDs: []
 			},
-			monsters: []
+			monsters: [],
+			state: {
+				staminaDamage: 0,
+				staminaTemp: 0,
+				conditions: [],
+				reactionUsed: false,
+				hidden: false,
+				defeated: false,
+				captainID: undefined
+			}
+		};
+	};
+
+	static createEncounterObjective = (): EncounterObjective => {
+		return {
+			id: Utils.guid(),
+			name: '',
+			description: '',
+			difficultyModifier: '',
+			successCondition: '',
+			failureCondition: '',
+			victories: ''
 		};
 	};
 
@@ -519,10 +563,7 @@ export class FactoryLogic {
 			patience: 1,
 			motivations: [],
 			pitfalls: [],
-			state: {
-				deltaInterest: 0,
-				deltaPatience: 0
-			}
+			outcomes: [ '', '', '', '', '', '' ]
 		};
 	};
 
@@ -570,11 +611,7 @@ export class FactoryLogic {
 			abilities: data.abilities || '',
 			uses: data.uses ?? 1,
 			successes: 0,
-			failures: 0,
-			state: {
-				successes: 0,
-				failures: 0
-			}
+			failures: 0
 		};
 	};
 
@@ -665,7 +702,7 @@ export class FactoryLogic {
 	};
 
 	static damageModifier = {
-		create: (data: { damageType: string, modifierType: DamageModifierType, value: number }): DamageModifier => {
+		create: (data: { damageType: DamageType, modifierType: DamageModifierType, value: number }): DamageModifier => {
 			return {
 				damageType: data.damageType,
 				type: data.modifierType,
@@ -676,7 +713,7 @@ export class FactoryLogic {
 				valuePerEchelon: 0
 			};
 		},
-		createPerLevel: (data: { damageType: string, modifierType: DamageModifierType, value: number }): DamageModifier => {
+		createPerLevel: (data: { damageType: DamageType, modifierType: DamageModifierType, value: number }): DamageModifier => {
 			return {
 				damageType: data.damageType,
 				type: data.modifierType,
@@ -687,7 +724,7 @@ export class FactoryLogic {
 				valuePerEchelon: 0
 			};
 		},
-		createValuePlusPerLevel: (data: { damageType: string, modifierType: DamageModifierType, value: number, perLevel: number }): DamageModifier => {
+		createValuePlusPerLevel: (data: { damageType: DamageType, modifierType: DamageModifierType, value: number, perLevel: number }): DamageModifier => {
 			return {
 				damageType: data.damageType,
 				type: data.modifierType,
@@ -698,7 +735,7 @@ export class FactoryLogic {
 				valuePerEchelon: 0
 			};
 		},
-		createFirstLevelHigherLevel: (data: { damageType: string, modifierType: DamageModifierType, first: number, higher: number }): DamageModifier => {
+		createFirstLevelHigherLevel: (data: { damageType: DamageType, modifierType: DamageModifierType, first: number, higher: number }): DamageModifier => {
 			return {
 				damageType: data.damageType,
 				type: data.modifierType,
@@ -709,7 +746,7 @@ export class FactoryLogic {
 				valuePerEchelon: 0
 			};
 		},
-		createPerEchelon: (data: { damageType: string, modifierType: DamageModifierType, value: number }): DamageModifier => {
+		createPerEchelon: (data: { damageType: DamageType, modifierType: DamageModifierType, value: number }): DamageModifier => {
 			return {
 				damageType: data.damageType,
 				type: data.modifierType,
@@ -720,7 +757,7 @@ export class FactoryLogic {
 				valuePerEchelon: data.value
 			};
 		},
-		createCharacteristic: (data: { damageType: string, modifierType: DamageModifierType, characteristics: Characteristic[], multiplier?: number }): DamageModifier => {
+		createCharacteristic: (data: { damageType: DamageType, modifierType: DamageModifierType, characteristics: Characteristic[], multiplier?: number }): DamageModifier => {
 			return {
 				damageType: data.damageType,
 				type: data.modifierType,
@@ -791,6 +828,15 @@ export class FactoryLogic {
 		createNoAction: (): AbilityType => {
 			return {
 				usage: AbilityUsage.NoAction,
+				free: false,
+				trigger: '',
+				time: '',
+				qualifiers: []
+			};
+		},
+		createFreeStrike: (): AbilityType => {
+			return {
+				usage: AbilityUsage.FreeStrike,
 				free: false,
 				trigger: '',
 				time: '',
@@ -876,12 +922,45 @@ export class FactoryLogic {
 		createAbilityCost: (data: { id: string, name?: string, description?: string, keywords: AbilityKeyword[], modifier: number }): FeatureAbilityCost => {
 			return {
 				id: data.id,
-				name: data.name || `${data.keywords.join(', ')} cost modifier`,
+				name: data.name || 'Ability cost modifier',
 				description: data.description || '',
 				type: FeatureType.AbilityCost,
 				data: {
 					keywords: data.keywords,
 					modifier: data.modifier
+				}
+			};
+		},
+		createAbilityDamage: (data: { id: string, name?: string, description?: string, keywords: AbilityKeyword[], modifier: number, damageType?: DamageType }): FeatureAbilityDamage => {
+			return {
+				id: data.id,
+				name: data.name || 'Ability damage modifier',
+				description: data.description || '',
+				type: FeatureType.AbilityDamage,
+				data: {
+					keywords: data.keywords,
+					value: data.modifier,
+					valueCharacteristics: [],
+					valueCharacteristicMultiplier: 0,
+					valuePerLevel: 0,
+					valuePerEchelon: 0,
+					damageType: data.damageType || DamageType.Damage
+				}
+			};
+		},
+		createAbilityDistance: (data: { id: string, name?: string, description?: string, keywords: AbilityKeyword[], modifier: number }): FeatureAbilityDistance => {
+			return {
+				id: data.id,
+				name: data.name || 'Ability distance modifier',
+				description: data.description || '',
+				type: FeatureType.AbilityDistance,
+				data: {
+					keywords: data.keywords,
+					value: data.modifier,
+					valueCharacteristics: [],
+					valueCharacteristicMultiplier: 0,
+					valuePerLevel: 0,
+					valuePerEchelon: 0
 				}
 			};
 		},
@@ -908,7 +987,7 @@ export class FactoryLogic {
 				}
 			};
 		},
-		createAncestryFeature: (data: { id: string, name?: string, description?: string, current: boolean, former: boolean, value: number }): FeatureAncestryFeatureChoice => {
+		createAncestryFeature: (data: { id: string, name?: string, description?: string, current: boolean, former: boolean, customID: string, value: number }): FeatureAncestryFeatureChoice => {
 			return {
 				id: data.id,
 				name: data.name || 'Ancestry Feature',
@@ -917,7 +996,8 @@ export class FactoryLogic {
 				data: {
 					source: {
 						current: data.current,
-						former: data.former
+						former: data.former,
+						customID: data.customID
 					},
 					value: data.value,
 					selected: null
@@ -994,6 +1074,17 @@ export class FactoryLogic {
 				}
 			};
 		},
+		createConditionImmunity: (data: { id: string, name?: string, description?: string, conditions: ConditionType[] }): FeatureConditionImmunity => {
+			return {
+				id: data.id,
+				name: data.name || 'Condition Immunity',
+				description: data.description || data.conditions.join(', '),
+				type: FeatureType.ConditionImmunity,
+				data: {
+					conditions: data.conditions
+				}
+			};
+		},
 		createDamageModifier: (data: { id: string, name?: string, description?: string, modifiers: DamageModifier[] }): FeatureDamageModifier => {
 			return {
 				id: data.id,
@@ -1047,7 +1138,7 @@ export class FactoryLogic {
 				}
 			};
 		},
-		createKitChoice: (data: { id: string, name?: string, description?: string, types?: KitType[], count?: number }): FeatureKit => {
+		createKitChoice: (data: { id: string, name?: string, description?: string, types?: string[], count?: number }): FeatureKit => {
 			const count = data.count || 1;
 			return {
 				id: data.id,
@@ -1055,20 +1146,9 @@ export class FactoryLogic {
 				description: data.description || '',
 				type: FeatureType.Kit,
 				data: {
-					types: data.types || [],
+					types: data.types || [ '' ],
 					count: count,
 					selected: []
-				}
-			};
-		},
-		createKitType: (data: { id: string, name?: string, description?: string, types: KitType[] }): FeatureKitType => {
-			return {
-				id: data.id,
-				name: data.name || 'Kit Type',
-				description: data.description || '',
-				type: FeatureType.KitType,
-				data: {
-					types: data.types || []
 				}
 			};
 		},
@@ -1221,6 +1301,31 @@ export class FactoryLogic {
 				}
 			};
 		},
+		createTaggedFeature: (data: { tag: string, feature: Feature }): FeatureTaggedFeature => {
+			return {
+				id: data.feature.id,
+				name: data.feature.name,
+				description: data.feature.description,
+				type: FeatureType.TaggedFeature,
+				data: {
+					tag: data.tag,
+					feature: data.feature
+				}
+			};
+		},
+		createTaggedFeatureChoice: (data: { id: string, name?: string, description?: string, tag: string, count?: number }): FeatureTaggedFeatureChoice => {
+			return {
+				id: data.id,
+				name: data.name || 'Tagged Feature',
+				description: data.description || '',
+				type: FeatureType.TaggedFeatureChoice,
+				data: {
+					tag: data.tag,
+					count: data.count || 1,
+					selected: []
+				}
+			};
+		},
 		createTitleChoice: (data: { id: string, name?: string, description?: string, echelon?: number, count?: number }): FeatureTitleChoice => {
 			const count = data.count || 1;
 			return {
@@ -1236,4 +1341,101 @@ export class FactoryLogic {
 			};
 		}
 	};
+
+	public static createTacticalMap(): TacticalMap {
+		return {
+			id: Utils.guid(),
+			name: '',
+			description: '',
+			items: []
+		};
+	}
+
+	public static createMapTile(): MapTile {
+		return {
+			id: Utils.guid(),
+			type: 'tile',
+			notes: '',
+			position: {
+				x: 0,
+				y: 0,
+				z: 0
+			},
+			dimensions: {
+				width: 4,
+				height: 4,
+				depth: 1
+			},
+			corners: 'square',
+			content: {
+				type: 'color',
+				color: 'C8C8C8FF'
+			}
+		};
+	}
+
+	public static createMapWall(): MapWall {
+		return {
+			id: Utils.guid(),
+			type: 'wall',
+			notes: '',
+			pointA: { x: 0, y: 0, z: 0 },
+			pointB: { x: 0, y: 0, z: 0 },
+			blocksLineOfSight: true,
+			blocksMovement: true,
+			isOpenable: false,
+			isConcealed: false
+		};
+	};
+
+	public static createMapZone(): MapZone {
+		return {
+			id: Utils.guid(),
+			type: 'zone',
+			notes: '',
+			position: {
+				x: 0,
+				y: 0,
+				z: 0
+			},
+			dimensions: {
+				width: 4,
+				height: 4,
+				depth: 1
+			},
+			corners: 'rounded',
+			color: '5599ff80'
+		};
+	}
+
+	public static createMapMini(): MapMini {
+		return {
+			id: Utils.guid(),
+			type: 'mini',
+			notes: '',
+			position: {
+				x: 0,
+				y: 0,
+				z: 0
+			},
+			dimensions: {
+				width: 1,
+				height: 1,
+				depth: 1
+			},
+			content: null
+		};
+	}
+
+	public static createMapFog(): MapFog {
+		return {
+			id: Utils.guid(),
+			type: 'fog',
+			position: {
+				x: 0,
+				y: 0,
+				z: 0
+			}
+		};
+	}
 }

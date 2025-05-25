@@ -1,6 +1,7 @@
 import { AbilityKeyword } from '../enums/ability-keyword';
 import { Characteristic } from '../enums/characteristic';
 import { DamageModifierType } from '../enums/damage-modifier-type';
+import { DamageType } from '../enums/damage-type';
 import { FactoryLogic } from '../logic/factory-logic';
 import { FeatureField } from '../enums/feature-field';
 import { Item } from '../models/item';
@@ -269,10 +270,24 @@ export class TrinketData {
 			characteristic: [ Characteristic.Reason, Characteristic.Intuition ],
 			goal: 150
 		}),
-		effect: `
-While worn, a blue Color Cloak grants you cold immunity equal to your level.
-
-Additionally, when you are targeted by any effect that deals cold damage, you can use a triggered action to shift a number of squares equal to your level. If you do so, the cold immunity granted by the cloak becomes cold weakness with the same value until the end of the next round. You can't use this triggered action again until this weakness ends.`
+		effect: 'When you are targeted by any effect that deals cold damage, you can use a triggered action to shift a number of squares equal to your level. If you do so, the cold immunity granted by the cloak becomes cold weakness with the same value until the end of the next round. You can\'t use this triggered action again until this weakness ends.',
+		featuresByLevel: [
+			{
+				level: 1,
+				features: [
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-color-cloak-blue-1',
+						modifiers: [
+							FactoryLogic.damageModifier.createPerLevel({
+								damageType: DamageType.Cold,
+								modifierType: DamageModifierType.Immunity,
+								value: 1
+							})
+						]
+					})
+				]
+			}
+		]
 	});
 
 	static colorCloakRed: Item = FactoryLogic.createItem({
@@ -287,10 +302,24 @@ Additionally, when you are targeted by any effect that deals cold damage, you ca
 			characteristic: [ Characteristic.Reason, Characteristic.Intuition ],
 			goal: 150
 		}),
-		effect: `
-While worn, a red Color Cloak grants you fire immunity equal to your level.
-
-Additionally, when you are targeted by any effect that deals fire damage, you can use a triggered action to reduce the damage to 0. If you do so, the fire immunity granted by this cloak becomes fire weakness with the same value until the end of the next round. You can't use this triggered action again until this weakness ends.`
+		effect: 'When you are targeted by any effect that deals fire damage, you can use a triggered action to reduce the damage to 0. If you do so, the fire immunity granted by this cloak becomes fire weakness with the same value until the end of the next round. You can\'t use this triggered action again until this weakness ends.',
+		featuresByLevel: [
+			{
+				level: 1,
+				features: [
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-color-cloak-red-1',
+						modifiers: [
+							FactoryLogic.damageModifier.createPerLevel({
+								damageType: DamageType.Fire,
+								modifierType: DamageModifierType.Immunity,
+								value: 1
+							})
+						]
+					})
+				]
+			}
+		]
 	});
 
 	static colorCloakYellow: Item = FactoryLogic.createItem({
@@ -305,10 +334,24 @@ Additionally, when you are targeted by any effect that deals fire damage, you ca
 			characteristic: [ Characteristic.Reason, Characteristic.Intuition ],
 			goal: 150
 		}),
-		effect: `
-While worn, a yellow Color Cloak grants you lightning immunity equal to your level.
-
-Additionally, when you are targeted by any effect that deals lightning damage, you can use a triggered action to cause the next damage-dealing ability you use to deal extra lightning damage equal to your level. Once you deal this extra damage, your lightning immunity becomes lightning weakness with the same value until the end of the next round. You can't use this triggered action again until this weakness ends.`
+		effect: 'When you are targeted by any effect that deals lightning damage, you can use a triggered action to cause the next damage-dealing ability you use to deal extra lightning damage equal to your level. Once you deal this extra damage, your lightning immunity becomes lightning weakness with the same value until the end of the next round. You can\'t use this triggered action again until this weakness ends.',
+		featuresByLevel: [
+			{
+				level: 1,
+				features: [
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-color-cloak-yellow-1',
+						modifiers: [
+							FactoryLogic.damageModifier.createPerLevel({
+								damageType: DamageType.Lightning,
+								modifierType: DamageModifierType.Immunity,
+								value: 1
+							})
+						]
+					})
+				]
+			}
+		]
 	});
 
 	static deadweight: Item = FactoryLogic.createItem({
@@ -482,10 +525,30 @@ export class LeveledArmorData {
 			{
 				level: 1,
 				features: [
-					FactoryLogic.feature.create({
-						id: 'item-adaptive-second-skin-1',
-						name: '',
-						description: 'While you wear this armor, you have a +6 bonus to Stamina, and you have immunity to acid and poison damage equal to your highest characteristic score.'
+					FactoryLogic.feature.createBonus({
+						id: 'item-adaptive-second-skin-1a',
+						field: FeatureField.Stamina,
+						value: 6
+					}),
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-adaptive-second-skin-1b',
+						modifiers: [
+							FactoryLogic.damageModifier.createCharacteristic({
+								damageType: DamageType.Acid,
+								modifierType: DamageModifierType.Immunity,
+								characteristics: [ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ]
+							})
+						]
+					}),
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-adaptive-second-skin-1c',
+						modifiers: [
+							FactoryLogic.damageModifier.createCharacteristic({
+								damageType: DamageType.Poison,
+								modifierType: DamageModifierType.Immunity,
+								characteristics: [ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ]
+							})
+						]
 					})
 				]
 			},
@@ -495,7 +558,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-adaptive-second-skin-5',
 						name: '',
-						description: 'The armor\'s bonus to Stamina increases to +12 . Additionally, whenever an adjacent creature deals damage to you, they take 3 acid or poison damage (your choice).'
+						description: 'Whenever an adjacent creature deals damage to you, they take 3 acid or poison damage (your choice).'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-adaptive-second-skin-5a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -505,7 +573,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-adaptive-second-skin-9',
 						name: '',
-						description: 'The armor\'s bonus to Stamina increases to +21, and an adjacent creature who deals damage to you takes 6 acid or poison damage. Additionally, you can use a maneuver to transmute a 2-cube area of liquid or gas within 1 square of you into liquid acid or poison gas until the start of your next turn. Any creature who enters the area for the first time in a round or starts their turn there takes 6 acid or poison damage, as appropriate.'
+						description: 'An adjacent creature who deals damage to you takes 6 acid or poison damage. Additionally, you can use a maneuver to transmute a 2-cube area of liquid or gas within 1 square of you into liquid acid or poison gas until the start of your next turn. Any creature who enters the area for the first time in a round or starts their turn there takes 6 acid or poison damage, as appropriate.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-adaptive-second-skin-9a',
+						field: FeatureField.Stamina,
+						value: 9
 					})
 				]
 			}
@@ -531,7 +604,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-chain-of-the-sea-and-sky-1',
 						name: '',
-						description: 'While you wear this armor, you have a +6 bonus to Stamina, you can automatically swim at full speed while moving, and you can breathe underwater for up to 1 hour. Returning to the surface to breathe air again for any length of time resets the armor\'s water-breathing benefit.'
+						description: 'While you wear this armor, you can automatically swim at full speed while moving, and you can breathe underwater for up to 1 hour. Returning to the surface to breathe air again for any length of time resets the armor\'s water-breathing benefit.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-chain-of-the-sea-and-sky-1a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -541,7 +619,22 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-chain-of-the-sea-and-sky-5',
 						name: '',
-						description: 'The armor\'s bonus to Stamina increases to +12, and you have cold immunity 5. Additionally, whenever you fall, you can extend your arms (no action required) to unfurl a thick membrane between your arms and your body, slowing your fall and allowing you to glide. While gliding in this way, you move downward at a speed of 1 square per round, and you can glide up to 6 squares horizontally as a free maneuver once during each of your turns.'
+						description: 'Whenever you fall, you can extend your arms (no action required) to unfurl a thick membrane between your arms and your body, slowing your fall and allowing you to glide. While gliding in this way, you move downward at a speed of 1 square per round, and you can glide up to 6 squares horizontally as a free maneuver once during each of your turns.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-chain-of-the-sea-and-sky-5a',
+						field: FeatureField.Stamina,
+						value: 6
+					}),
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-chain-of-the-sea-and-sky-5b',
+						modifiers: [
+							FactoryLogic.damageModifier.create({
+								damageType: DamageType.Cold,
+								modifierType: DamageModifierType.Immunity,
+								value: 5
+							})
+						]
 					})
 				]
 			},
@@ -551,7 +644,22 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-chain-of-the-sea-and-sky-9',
 						name: '',
-						description: 'The armor\'s bonus to Stamina increases to +21, and you have cold immunity 10. Additionally, whenever your feet are not touching a solid surface (including floating in water or being in midair), you gain an edge on ability power rolls, and any abilities that target you take a bane.'
+						description: 'Whenever your feet are not touching a solid surface (including floating in water or being in midair), you gain an edge on ability power rolls, and any abilities that target you take a bane.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-chain-of-the-sea-and-sky-9a',
+						field: FeatureField.Stamina,
+						value: 9
+					}),
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-chain-of-the-sea-and-sky-9b',
+						modifiers: [
+							FactoryLogic.damageModifier.create({
+								damageType: DamageType.Cold,
+								modifierType: DamageModifierType.Immunity,
+								value: 10
+							})
+						]
 					})
 				]
 			}
@@ -577,7 +685,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-grand-scarab-1',
 						name: '',
-						description: 'While you wear this armor, you have a +6 bonus to Stamina and you can fly. If you don\'t end your turn on a solid surface, you fall.'
+						description: 'While you wear this armor, you can fly. If you don\'t end your turn on a solid surface, you fall.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-grand-scarab-1a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -587,7 +700,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-grand-scarab-5',
 						name: '',
-						description: 'The armor\'s bonus to Stamina increases to +12, and you no longer need to end your turn on a solid surface to avoid falling.'
+						description: 'You no longer need to end your turn on a solid surface to avoid falling.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-grand-scarab-5a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -597,7 +715,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-grand-scarab-9',
 						name: '',
-						description: 'The armor\'s bonus to Stamina increases to +21. Additionally, if you fly any distance before making a strike, that strike gains an edge.'
+						description: 'If you fly any distance before making a strike, that strike gains an edge.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-grand-scarab-9a',
+						field: FeatureField.Stamina,
+						value: 9
 					})
 				]
 			}
@@ -623,7 +746,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-kings-roar-1',
 						name: '',
-						description: 'While you wield or carry this shield, you gain a +3 bonus to Stamina. This Stamina bonus can be gained in addition to ones granted by other treasures. Additionally, you can use a maneuver to make the shield\'s lion face roar, choosing one creature or object adjacent to you and pushing that target up to 3 squares.'
+						description: 'You can use a maneuver to make the shield\'s lion face roar, choosing one creature or object adjacent to you and pushing that target up to 3 squares.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-kings-roar-1a',
+						field: FeatureField.Stamina,
+						value: 3
 					})
 				]
 			},
@@ -633,7 +761,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-kings-roar-5',
 						name: '',
-						description: 'The shield\'s bonus to Stamina increases to +6. When you cause the shield to roar, you target one creature or object within 3 squares and push that target up to 4 squares.'
+						description: 'When you cause the shield to roar, you target one creature or object within 3 squares and push that target up to 4 squares.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-kings-roar-5a',
+						field: FeatureField.Stamina,
+						value: 3
 					})
 				]
 			},
@@ -643,7 +776,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-kings-roar-9',
 						name: '',
-						description: 'The shield\'s bonus to Stamina increases to +9. When you cause the shield to roar, you target one creature or object within 6 squares, you push that target up to 5 squares, and the target is slowed until the end of their turn.'
+						description: 'When you cause the shield to roar, you target one creature or object within 6 squares, you push that target up to 5 squares, and the target is slowed until the end of their turn.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-kings-roar-9a',
+						field: FeatureField.Stamina,
+						value: 3
 					})
 				]
 			}
@@ -669,7 +807,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-kuranzoi-prismscale-1',
 						name: '',
-						description: 'You gain a +6 bonus to Stamina while you wear this armor. Additionally, whenever a creature within 5 squares deals damage to you, you can use a triggered action to capture a moment of time in the armor, forcing the creature to immediately end their turn after the damage and any effects associated with it are resolved.'
+						description: 'Whenever a creature within 5 squares deals damage to you, you can use a triggered action to capture a moment of time in the armor, forcing the creature to immediately end their turn after the damage and any effects associated with it are resolved.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-kuranzoi-prismscale-1a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -679,7 +822,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-kuranzoi-prismscale-5',
 						name: '',
-						description: 'The armor\'s bonus to Stamina increases to +12. When you capture a moment of time in the armor, the triggering creature is also slowed until the end of their turn.'
+						description: 'When you capture a moment of time in the armor, the triggering creature is also slowed until the end of their turn.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-kuranzoi-prismscale-5a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -689,7 +837,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-kuranzoi-prismscale-9',
 						name: '',
-						description: 'The armor\'s bonus to Stamina increases to +21. Additionally, whenever you capture a moment of time in the armor, you can immediately release it for a burst of speed. If you do, you become dazed (save ends) and can take an extra turn immediately after the triggering creature.'
+						description: 'Whenever you capture a moment of time in the armor, you can immediately release it for a burst of speed. If you do, you become dazed (save ends) and can take an extra turn immediately after the triggering creature.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-kuranzoi-prismscale-9a',
+						field: FeatureField.Stamina,
+						value: 9
 					})
 				]
 			}
@@ -715,7 +868,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-paper-trappings-1',
 						name: '',
-						description: 'While you wear this armor, you have a +6 bonus to Stamina. Additionally, as an action, you can fold in on yourself until you and your gear are paper thin. This effect lasts for 1 minute, letting you easily slip through any opening that is at least 1 inch wide. When you return to your three-dimensional form, you are dazed for 1 minute. If you return to your true form while in a space that is too small for you, you are violently expelled into the nearest open space of your choice and take 3d6 damage.'
+						description: 'As an action, you can fold in on yourself until you and your gear are paper thin. This effect lasts for 1 minute, letting you easily slip through any opening that is at least 1 inch wide. When you return to your three-dimensional form, you are dazed for 1 minute. If you return to your true form while in a space that is too small for you, you are violently expelled into the nearest open space of your choice and take 3d6 damage.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-paper-trappings-1a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -725,7 +883,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-paper-trappings-5',
 						name: '',
-						description: 'The armor’s bonus to Stamina increases to +12, and when you return to your true form, you are dazed only until the end of your next turn. Additionally, while you are paper thin, you can use a maneuver to wrap yourself around an adjacent target who is the same size or smaller than you, automatically grabbing them.'
+						description: 'When you return to your true form, you are dazed only until the end of your next turn. Additionally, while you are paper thin, you can use a maneuver to wrap yourself around an adjacent target who is the same size or smaller than you, automatically grabbing them.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-paper-trappings-5a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -735,7 +898,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-paper-trappings-9',
 						name: '',
-						description: 'The armor’s bonus to Stamina increases to +21, and you are no longer dazed when you return to your true form. Additionally, while you have a target grabbed when you are paper thin, you can use a maneuver to constrict the target, dealing 10 damage to them. A creature damaged this way takes a bane when using the Escape Grab maneuver against you and when making a strike against you.'
+						description: 'You are no longer dazed when you return to your true form. Additionally, while you have a target grabbed when you are paper thin, you can use a maneuver to constrict the target, dealing 10 damage to them. A creature damaged this way takes a bane when using the Escape Grab maneuver against you and when making a strike against you.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-paper-trappings-9a',
+						field: FeatureField.Stamina,
+						value: 9
 					})
 				]
 			}
@@ -761,7 +929,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-shrouded-memory-1',
 						name: '',
-						description: 'You gain a +6 bonus to Stamina while you wear this armor. Additionally, you gain an edge on tests made to lie about or conceal your identity.'
+						description: 'You gain an edge on tests made to lie about or conceal your identity.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-shrouded-memory-1a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -771,7 +944,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-shrouded-memory-5',
 						name: '',
-						description: 'The armor’s bonus to Stamina increases to +12. Additionally, whenever you take damage, you can use a triggered action to teleport up to 5 squares. If you do, you create an illusion of you dying in your previous space, which fades at the end of your next turn.'
+						description: 'Whenever you take damage, you can use a triggered action to teleport up to 5 squares. If you do, you create an illusion of you dying in your previous space, which fades at the end of your next turn.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-shrouded-memory-5a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -781,7 +959,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-shrouded-memory-9',
 						name: '',
-						description: 'The armor’s bonus to Stamina increases to +21. Whenever you use the armor’s triggered action to teleport, you can teleport up to a number of squares equal to the damage taken. Additionally, if a creature dealt you the triggering damage, you become invisible to that creature until the end of your next turn.'
+						description: 'Whenever you use the armor’s triggered action to teleport, you can teleport up to a number of squares equal to the damage taken. Additionally, if a creature dealt you the triggering damage, you become invisible to that creature until the end of your next turn.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-shrouded-memory-9a',
+						field: FeatureField.Stamina,
+						value: 9
 					})
 				]
 			}
@@ -807,7 +990,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-spiny-turtle-1',
 						name: '',
-						description: 'While you wear this armor, you have a +6 bonus to Stamina. Additionally, as an action, you can expand the armor on your back to create a 4 wall of metal behind you. The wall is an object that retracts if you move, or if it takes 15 damage. It then requires an action to recalibrate before it can be deployed again.'
+						description: 'As an action, you can expand the armor on your back to create a 4 wall of metal behind you. The wall is an object that retracts if you move, or if it takes 15 damage. It then requires an action to recalibrate before it can be deployed again.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-spiny-turtle-1a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -817,7 +1005,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-spiny-turtle-5',
 						name: '',
-						description: 'The armor’s bonus to Stamina increases to +12. Additionally, the damage the wall can take before retracting increases to 25. Additionally, while the wall is expanded, spikes extrude from it, and any creature who deals damage to the wall while adjacent to it takes 3 damage.'
+						description: 'The damage the wall can take before retracting increases to 25. Additionally, while the wall is expanded, spikes extrude from it, and any creature who deals damage to the wall while adjacent to it takes 3 damage.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-spiny-turtle-5a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
@@ -827,7 +1020,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-spiny-turtle-9',
 						name: '',
-						description: 'The armor’s bonus to Stamina increases to +21. Additionally, spikes cover the armor, and any creature who deals damage to you while adjacent to you takes 6 damage.'
+						description: 'Spikes cover the armor, and any creature who deals damage to you while adjacent to you takes 6 damage.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-spiny-turtle-9a',
+						field: FeatureField.Stamina,
+						value: 9
 					})
 				]
 			}
@@ -853,7 +1051,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-star-hunter-1',
 						name: '',
-						description: 'While you wear this armor, you have a +7 bonus to Stamina, but any magic ability gains an edge when targeting you. Additionally, you instinctively know the location of any concealed creature within 2 squares. You can also turn invisible as a maneuver. Your invisibility ends if you take damage or use an ability, or at the end of your next turn.'
+						description: 'Any magic ability gains an edge when targeting you. Additionally, you instinctively know the location of any concealed creature within 2 squares. You can also turn invisible as a maneuver. Your invisibility ends if you take damage or use an ability, or at the end of your next turn.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-star-hunter-1a',
+						field: FeatureField.Stamina,
+						value: 7
 					})
 				]
 			},
@@ -863,7 +1066,22 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-star-hunter-5',
 						name: '',
-						description: 'The armor’s bonus to Stamina increases to +14, and you instinctively know the location of any concealed creature within 5 squares. Your invisibility no longer ends at the end of your next turn. Additionally, you have psychic immunity 5.'
+						description: 'You instinctively know the location of any concealed creature within 5 squares. Your invisibility no longer ends at the end of your next turn.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-star-hunter-5a',
+						field: FeatureField.Stamina,
+						value: 7
+					}),
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-star-hunter-5b',
+						modifiers: [
+							FactoryLogic.damageModifier.create({
+								damageType: DamageType.Psychic,
+								modifierType: DamageModifierType.Immunity,
+								value: 5
+							})
+						]
 					})
 				]
 			},
@@ -873,7 +1091,22 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-star-hunter-9',
 						name: '',
-						description: 'The armor’s bonus to Stamina increases to +25, and you instinctively know the location of any concealed creature within 10 squares. Your invisibility no longer ends when you use an ability, and you have psychic immunity 10.'
+						description: 'You instinctively know the location of any concealed creature within 10 squares. Your invisibility no longer ends when you use an ability.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-star-hunter-9a',
+						field: FeatureField.Stamina,
+						value: 11
+					}),
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-star-hunter-9b',
+						modifiers: [
+							FactoryLogic.damageModifier.create({
+								damageType: DamageType.Psychic,
+								modifierType: DamageModifierType.Immunity,
+								value: 10
+							})
+						]
 					})
 				]
 			}
@@ -899,7 +1132,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-telekinetic-bulwark-1',
 						name: '',
-						description: 'While you wield or carry this shield, you gain a +2 bonus to Stamina. This Stamina bonus can be gained in addition to ones granted by other treasures. Additionally, once per turn when an adjacent enemy uses an ability, you can use a free triggered action to use the Grab maneuver against that enemy. You can have any number of enemies grabbed in this way.'
+						description: 'Once per turn when an adjacent enemy uses an ability, you can use a free triggered action to use the Grab maneuver against that enemy. You can have any number of enemies grabbed in this way.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-telekinetic-bulwark-1a',
+						field: FeatureField.Stamina,
+						value: 2
 					})
 				]
 			},
@@ -909,7 +1147,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-telekinetic-bulwark-5',
 						name: '',
-						description: 'The shield’s bonus to Stamina increases to +5, and you can use the shield’s free triggered action to grab any enemy within 10 squares who uses an ability. Additionally, any enemy who uses the Escape Grab maneuver while grabbed this way takes a bane on the test.'
+						description: 'You can use the shield’s free triggered action to grab any enemy within 10 squares who uses an ability. Additionally, any enemy who uses the Escape Grab maneuver while grabbed this way takes a bane on the test.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-telekinetic-bulwark-5a',
+						field: FeatureField.Stamina,
+						value: 3
 					})
 				]
 			},
@@ -919,7 +1162,12 @@ export class LeveledArmorData {
 					FactoryLogic.feature.create({
 						id: 'item-telekinetic-bulwark-9',
 						name: '',
-						description: 'The shield’s bonus to Stamina increases to +9. Additionally, you can use a maneuver to pull any number of targets the shield has grabbed up to 5 squares.'
+						description: 'You can use a maneuver to pull any number of targets the shield has grabbed up to 5 squares.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-telekinetic-bulwark-9a',
+						field: FeatureField.Stamina,
+						value: 4
 					})
 				]
 			}
@@ -993,7 +1241,17 @@ export class LeveledImplementData {
 					FactoryLogic.feature.create({
 						id: 'item-brittlebreaker-1',
 						name: '',
-						description: 'While you wield this implement, your damagedealing supernatural abilities deal an extra 2 rolled psychic damage. Additionally, you have damage weakness 3, but you gain an edge on supernatural power rolls if you aren\'t at full Stamina, or a double edge if you are winded.'
+						description: 'While you wield this implement, your damage-dealing supernatural abilities deal an extra 2 rolled psychic damage. Additionally, you gain an edge on supernatural power rolls if you aren\'t at full Stamina, or a double edge if you are winded.'
+					}),
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-brittlebreaker-1a',
+						modifiers: [
+							FactoryLogic.damageModifier.create({
+								damageType: DamageType.Damage,
+								modifierType: DamageModifierType.Weakness,
+								value: 3
+							})
+						]
 					})
 				]
 			},
@@ -1013,7 +1271,7 @@ export class LeveledImplementData {
 					FactoryLogic.feature.create({
 						id: 'item-brittlebreaker-9',
 						name: '',
-						description: 'The implement\'s extra psychic damage increases to 4. Additionally, whenever you use a damagedealing supernatural ability, you can take half as much damage as is dealt to the target to immediately use the same ability again. The damage you take can\'t be reduced in any way. You can repeat this process until you become winded.'
+						description: 'The implement\'s extra psychic damage increases to 4. Additionally, whenever you use a damage-dealing supernatural ability, you can take half as much damage as is dealt to the target to immediately use the same ability again. The damage you take can\'t be reduced in any way. You can repeat this process until you become winded.'
 					})
 				]
 			}
@@ -1039,7 +1297,7 @@ export class LeveledImplementData {
 					FactoryLogic.feature.create({
 						id: 'item-chaldorb-1',
 						name: '',
-						description: 'While you wield this implement, your damagedealing supernatural abilities gain a +1 rolled damage bonus. Additionally, if you make a magic strike, the strike must deal cold damage instead of its usual damage.'
+						description: 'While you wield this implement, your damage-dealing supernatural abilities gain a +1 rolled damage bonus. Additionally, if you make a magic strike, the strike must deal cold damage instead of its usual damage.'
 					})
 				]
 			},
@@ -1085,7 +1343,7 @@ export class LeveledImplementData {
 					FactoryLogic.feature.create({
 						id: 'item-ether-fueled-vessel-1',
 						name: '',
-						description: 'While you wield this implement, your damagedealing supernatural abilities gain a +1 rolled damage bonus. Additionally, whenever you deal damage to a creature with a supernatural ability, they become insubstantial to you until the end of their next turn, allowing you to pass through them freely. While insubstantial, a creature can\'t make opportunity attacks against you.'
+						description: 'While you wield this implement, your damage-dealing supernatural abilities gain a +1 rolled damage bonus. Additionally, whenever you deal damage to a creature with a supernatural ability, they become insubstantial to you until the end of their next turn, allowing you to pass through them freely. While insubstantial, a creature can\'t make opportunity attacks against you.'
 					})
 				]
 			},
@@ -1131,7 +1389,7 @@ export class LeveledImplementData {
 					FactoryLogic.feature.create({
 						id: 'item-foesense-lenses-1',
 						name: '',
-						description: 'While you wield this implement, your damagedealing supernatural abilities gain a +1 rolled damage bonus. Additionally, whenever you deal damage to a creature with a supernatural ability, you can use that creature\'s senses until the end of your next turn, allowing you to experience all they observe and use your abilities as if you were in their space. You also benefit from your own senses at the same time'
+						description: 'While you wield this implement, your damage-dealing supernatural abilities gain a +1 rolled damage bonus. Additionally, whenever you deal damage to a creature with a supernatural ability, you can use that creature\'s senses until the end of your next turn, allowing you to experience all they observe and use your abilities as if you were in their space. You also benefit from your own senses at the same time'
 					})
 				]
 			},
@@ -1177,7 +1435,7 @@ export class LeveledImplementData {
 					FactoryLogic.feature.create({
 						id: 'item-geometric-manipulator-1',
 						name: '',
-						description: 'While you wield this implement, your damagedealing supernatural abilities gain a +1 rolled damage bonus. Additionally, when you use any supernatural ability that creates a cube or a burst, you can use a maneuver to rearrange the squares of the area into any shape you wish, provided there are no empty squares inside it.'
+						description: 'While you wield this implement, your damage-dealing supernatural abilities gain a +1 rolled damage bonus. Additionally, when you use any supernatural ability that creates a cube or a burst, you can use a maneuver to rearrange the squares of the area into any shape you wish, provided there are no empty squares inside it.'
 					})
 				]
 			},
@@ -1223,7 +1481,19 @@ export class LeveledImplementData {
 					FactoryLogic.feature.create({
 						id: 'item-words-become-wonders-1',
 						name: '',
-						description: 'You open or close the tome as a maneuver while saying its full name. While the tome is open, it floats in a space adjacent to you and flips to specific pages at your command. Additionally, you gain an edge on Intuition tests to recall lore, and you gain a +3 bonus to the distance of your ranged supernatural abilities.'
+						description: 'You open or close the tome as a maneuver while saying its full name. While the tome is open, it floats in a space adjacent to you and flips to specific pages at your command. Additionally, you gain an edge on Intuition tests to recall lore.'
+					}),
+					FactoryLogic.feature.createAbilityDistance({
+						id: 'item-words-become-wonders-1a',
+						name: '',
+						keywords: [ AbilityKeyword.Magic, AbilityKeyword.Ranged ],
+						modifier: 3
+					}),
+					FactoryLogic.feature.createAbilityDistance({
+						id: 'item-words-become-wonders-1b',
+						name: '',
+						keywords: [ AbilityKeyword.Psionic, AbilityKeyword.Ranged ],
+						modifier: 3
 					})
 				]
 			},
@@ -1271,7 +1541,13 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-authoritys-end-1',
 						name: '',
-						description: 'Any damage-dealing weapon ability using this weapon gains a +1 rolled damage bonus. Whenever you damage a creature with the weapon, you can immediately use a maneuver to end one condition or effect imposed by that creature on you or another creature within 5 squares of you.'
+						description: 'Whenever you damage a creature with the weapon, you can immediately use a maneuver to end one condition or effect imposed by that creature on you or another creature within 5 squares of you.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-authoritys-end-1a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			},
@@ -1281,7 +1557,13 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-authoritys-end-5',
 						name: '',
-						description: 'The weapon\'s damage bonus increases to +2. Additionally, you and each ally within 2 squares of you gains a +1 bonus on saving throws.'
+						description: 'You and each ally within 2 squares of you gains a +1 bonus on saving throws.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-authoritys-end-5a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			},
@@ -1291,7 +1573,13 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-authoritys-end-9',
 						name: '',
-						description: 'The weapon\'s damage bonus increases to +3. Additionally, you no longer need to use a maneuver to end one condition or effect when you damage a creature with the weapon. The weapon also refuses to vie for control of your psyche, and no longer counts against the limit of leveled treasures you can carry safely.'
+						description: 'You no longer need to use a maneuver to end one condition or effect when you damage a creature with the weapon. The weapon also refuses to vie for control of your psyche, and no longer counts against the limit of leveled treasures you can carry safely.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-authoritys-end-9a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			}
@@ -1317,7 +1605,13 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-blade-of-quintessence-1',
 						name: '',
-						description: 'Any damage-dealing weapon ability using this weapon gains a +1 rolled damage bonus. Additionally, you can change the damage type of such abilities to cold, fire, lightning, or sonic.'
+						description: 'You can change the damage type of weapon abilities to cold, fire, lightning, or sonic.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-blade-of-quintessence-1a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			},
@@ -1327,38 +1621,51 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-blade-of-quintessence-5',
 						name: '',
-						description: 'The weapon’s damage bonus increases to +2. Additionally, the weapon can be used with ranged weapon abilities, and returns to you when a ranged ability is resolved. Ranged abilities used with the weapon increase their distance by 3, and must deal cold, fire, lightning, or sonic damage (chosen when you use the ability).'
+						description: 'The weapon can be used with ranged weapon abilities, and returns to you when a ranged ability is resolved. Ranged abilities used with the weapon increase their distance by 3, and must deal cold, fire, lightning, or sonic damage (chosen when you use the ability).'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-blade-of-quintessence-5a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Ranged ],
+						modifier: 1
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-blade-of-quintessence-5b',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon ],
+						modifier: 1
 					})
 				]
 			},
 			{
 				level: 9,
 				features: [
-					FactoryLogic.feature.create({
-						id: 'item-blade-of-quintessence-9',
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-blade-of-quintessence-9a',
 						name: '',
-						description: 'The weapon’s damage bonus increases to +3.'
+						keywords: [ AbilityKeyword.Weapon ],
+						modifier: 1
 					}),
 					FactoryLogic.feature.createDamageModifier({
 						id: 'item-blade-of-quintessence-9b',
 						modifiers: [
 							FactoryLogic.damageModifier.create({
-								damageType: 'Cold',
+								damageType: DamageType.Cold,
 								modifierType: DamageModifierType.Immunity,
 								value: 10
 							}),
 							FactoryLogic.damageModifier.create({
-								damageType: 'Fire',
+								damageType: DamageType.Fire,
 								modifierType: DamageModifierType.Immunity,
 								value: 10
 							}),
 							FactoryLogic.damageModifier.create({
-								damageType: 'Lightning',
+								damageType: DamageType.Lightning,
 								modifierType: DamageModifierType.Immunity,
 								value: 10
 							}),
 							FactoryLogic.damageModifier.create({
-								damageType: 'Sonic',
+								damageType: DamageType.Sonic,
 								modifierType: DamageModifierType.Immunity,
 								value: 10
 							})
@@ -1388,7 +1695,13 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-blade-of-the-luxurious-fop-1',
 						name: '',
-						description: 'Any damage-dealing weapon ability using this weapon gains a +1 rolled damage bonus. Additionally, whenever you deal damage with this weapon, you can immediately shift 1 square. As well, while you wield or carry the weapon and are present in a negotiation, if an NPC in a negotiation has the Greed, Legacy, Power, or Revelry motivation, their starting interest increases by 1 (to a maximum of 5).'
+						description: 'Whenever you deal damage with this weapon, you can immediately shift 1 square. As well, while you wield or carry the weapon and are present in a negotiation, if an NPC in a negotiation has the Greed, Legacy, Power, or Revelry motivation, their starting interest increases by 1 (to a maximum of 5).'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-blade-of-the-luxurious-fop-1a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			},
@@ -1398,7 +1711,13 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-blade-of-the-luxurious-fop-5',
 						name: '',
-						description: 'The weapon’s damage bonus increases to +2. Additionally, when you make an opportunity attack against an enemy of your size or smaller, you can use fancy footwork to knock them prone. You also gain a +1 bonus to Renown.'
+						description: 'When you make an opportunity attack against an enemy of your size or smaller, you can use fancy footwork to knock them prone. You also gain a +1 bonus to Renown.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-blade-of-the-luxurious-fop-5a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			},
@@ -1408,7 +1727,13 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-blade-of-the-luxurious-fop-9',
 						name: '',
-						description: 'The weapon’s damage bonus increases to +3. Additionally, you have a double edge on any test you make using a skill you have from the interpersonal skill group.'
+						description: 'You have a double edge on any test you make using a skill you have from the interpersonal skill group.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-blade-of-the-luxurious-fop-9a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			}
@@ -1766,7 +2091,7 @@ export class LeveledWeaponData {
 					FactoryLogic.feature.create({
 						id: 'item-steeltongue-5',
 						name: '',
-						description: 'The weapon\'s bonus to melee distance increases to +2. Additionally, when you use a damagedealing weapon ability using the weapon, that ability gains a +3 rolled damage bonus against any target who is bleeding.'
+						description: 'The weapon\'s bonus to melee distance increases to +2. Additionally, when you use a damage-dealing weapon ability using the weapon, that ability gains a +3 rolled damage bonus against any target who is bleeding.'
 					})
 				]
 			},
@@ -1942,17 +2267,32 @@ export class LeveledOtherData {
 					FactoryLogic.feature.create({
 						id: 'item-bloodbound-band-1',
 						name: '',
-						description: 'While you wear this ring, you gain a +6 bonus to Stamina. Additionally, during a respite, you can touch the ring to any number of other Bloodbound Bands worn by willing creatures to form a bond among all of you. Creatures related by blood can\'t form bonds in this way. Bonded creatures can each use the highest recovery value of any bonded creature in place of their own, and can spend each other\'s Recoveries as if they were their own. Whenever any other bonded creature takes damage, each bonded creature takes 1 damage that can\'t be reduced in any way. Your bond ends if you remove the ring, use it to bond with one or more other creatures, or die, but other rings continue to be bonded to each other.'
+						description: 'During a respite, you can touch the ring to any number of other Bloodbound Bands worn by willing creatures to form a bond among all of you. Creatures related by blood can\'t form bonds in this way. Bonded creatures can each use the highest recovery value of any bonded creature in place of their own, and can spend each other\'s Recoveries as if they were their own. Whenever any other bonded creature takes damage, each bonded creature takes 1 damage that can\'t be reduced in any way. Your bond ends if you remove the ring, use it to bond with one or more other creatures, or die, but other rings continue to be bonded to each other.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-bloodbound-band-1a',
+						field: FeatureField.Stamina,
+						value: 6
 					})
 				]
 			},
 			{
 				level: 5,
 				features: [
-					FactoryLogic.feature.create({
-						id: 'item-bloodbound-band-5',
-						name: '',
-						description: 'The ring\'s bonus to Stamina increases to +12. Additionally, you gain damage immunity 2.'
+					FactoryLogic.feature.createBonus({
+						id: 'item-bloodbound-band-5a',
+						field: FeatureField.Stamina,
+						value: 6
+					}),
+					FactoryLogic.feature.createDamageModifier({
+						id: 'item-bloodbound-band-5b',
+						modifiers: [
+							FactoryLogic.damageModifier.create({
+								damageType: DamageType.Damage,
+								modifierType: DamageModifierType.Immunity,
+								value: 2
+							})
+						]
 					})
 				]
 			},
@@ -1962,7 +2302,12 @@ export class LeveledOtherData {
 					FactoryLogic.feature.create({
 						id: 'item-bloodbound-band-9',
 						name: '',
-						description: 'The ring\'s bonus to Stamina increases to +21. Additionally, if a creature bonded with you dies, you can choose to die in their place. Your sacrifice twists fate to remove the creature from danger, and they regain Stamina equal to their winded value. Your ring then teleports into their possession and ceases to be magical.'
+						description: 'If a creature bonded with you dies, you can choose to die in their place. Your sacrifice twists fate to remove the creature from danger, and they regain Stamina equal to their winded value. Your ring then teleports into their possession and ceases to be magical.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-bloodbound-band-9a',
+						field: FeatureField.Stamina,
+						value: 9
 					})
 				]
 			}
@@ -1988,7 +2333,13 @@ export class LeveledOtherData {
 					FactoryLogic.feature.create({
 						id: 'item-bloody-hand-wraps-1',
 						name: '',
-						description: 'While you wear these hand wraps, your weapon abilities that use your unarmed strike gain a +1 rolled damage bonus. Additionally, once per turn, you can take 5 damage that can\'t be reduced in any way to use the Grab maneuver (no action required).'
+						description: 'Once per turn, you can take 5 damage that can\'t be reduced in any way to use the Grab maneuver (no action required).'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-bloody-hand-wraps-1a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			},
@@ -1998,7 +2349,13 @@ export class LeveledOtherData {
 					FactoryLogic.feature.create({
 						id: 'item-bloody-hand-wraps-5',
 						name: '',
-						description: 'The damage bonus granted by the hand wraps increases to +2. Additionally, once per turn, you can take 10 damage that can\'t be reduced in any way to make a melee free strike (no action required).'
+						description: 'Once per turn, you can take 10 damage that can\'t be reduced in any way to make a melee free strike (no action required).'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-bloody-hand-wraps-5a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			},
@@ -2008,7 +2365,13 @@ export class LeveledOtherData {
 					FactoryLogic.feature.create({
 						id: 'item-bloody-hand-wraps-9',
 						name: '',
-						description: 'The damage bonus granted by the hand wraps increases to +3. Additionally, once per turn, you can take 15 damage that can\'t be reduced in any way to use a signature ability (no action required).'
+						description: 'Once per turn, you can take 15 damage that can\'t be reduced in any way to use a signature ability (no action required).'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-bloody-hand-wraps-9a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1
 					})
 				]
 			}
@@ -2031,10 +2394,18 @@ export class LeveledOtherData {
 			{
 				level: 1,
 				features: [
-					FactoryLogic.feature.create({
-						id: 'item-lightning-treads-1',
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-lightning-treads-1a',
 						name: '',
-						description: 'While you wear the boots, any damage-dealing weapon ability using your unarmed strike deals an extra 1 rolled lightning damage. Additionally, you gain a +2 bonus to speed.'
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1,
+						damageType: DamageType.Lightning
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-lightning-treads-1b',
+						name: '',
+						field: FeatureField.Speed,
+						value: 2
 					})
 				]
 			},
@@ -2044,7 +2415,14 @@ export class LeveledOtherData {
 					FactoryLogic.feature.create({
 						id: 'item-lightning-treads-5',
 						name: '',
-						description: 'The extra lightning damage granted by the treads increases to 2. This bonus increases by 1 for each square you move this turn before you use the ability to a maximum total bonus of 4.'
+						description: 'Any damage-dealing weapon ability using your unarmed strike deals 1 extra lightning damage for each square you move this turn before you use the ability to a maximum bonus of +2.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-lightning-treads-5a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1,
+						damageType: DamageType.Lightning
 					})
 				]
 			},
@@ -2054,7 +2432,14 @@ export class LeveledOtherData {
 					FactoryLogic.feature.create({
 						id: 'item-lightning-treads-9',
 						name: '',
-						description: 'The extra lightning damage granted by the treads increases to 3, and the maximum total damage bonus you can earn including movement increase to 6. Additionally, you can use a maneuver to perform a flying lightning kick on one adjacent creature. That target is pushed up to 5 squares, and you can move to any square adjacent to the target after the push.'
+						description: 'The maximum total damage bonus you can earn including movement increase to +3. Additionally, you can use a maneuver to perform a flying lightning kick on one adjacent creature. That target is pushed up to 5 squares, and you can move to any square adjacent to the target after the push.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-lightning-treads-9a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 1,
+						damageType: DamageType.Lightning
 					})
 				]
 			}
@@ -2127,11 +2512,15 @@ export class LeveledOtherData {
 						id: 'item-thief-of-joy-1',
 						name: '',
 						description: `
-While you wear this torc, you gain a bonus to Stamina equal to twice your highest characteristic score.
-
-Additionally, you can use a maneuver to choose a creature in your line of effect and learn their level. If their level is higher than yours, the torc grants you envy. If their level is equal to or lower than yours, the torc grants you disdain.
+You can use a maneuver to choose a creature in your line of effect and learn their level. If their level is higher than yours, the torc grants you envy. If their level is equal to or lower than yours, the torc grants you disdain.
 
 You can have both envy and disdain, but not more than one instance of either. Whenever a creature within 10 squares of you deals damage to another creature, you can use a triggered action to expend your envy or disdain. If you expend envy, you deal damage equal to the triggering damage to a creature adjacent to you. If you expend disdain, you reduce the triggering damage by half. At the end of the encounter, you lose any envy or disdain granted by the torc.`
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-thief-of-joy-1a',
+						field: FeatureField.Stamina,
+						valueCharacteristics: [ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ],
+						valueCharacteristicMultiplier: 2
 					})
 				]
 			},
@@ -2141,7 +2530,13 @@ You can have both envy and disdain, but not more than one instance of either. Wh
 					FactoryLogic.feature.create({
 						id: 'item-thief-of-joy-5',
 						name: '',
-						description: 'The torc\'s bonus to Stamina increases to three times your highest characteristic score. Additionally, when you use the torc\'s maneuver and the target creature is the same level as you, you gain your choice of envy or disdain.'
+						description: 'When you use the torc\'s maneuver and the target creature is the same level as you, you gain your choice of envy or disdain.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-thief-of-joy-5a',
+						field: FeatureField.Stamina,
+						valueCharacteristics: [ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ],
+						valueCharacteristicMultiplier: 3
 					})
 				]
 			},
@@ -2151,7 +2546,13 @@ You can have both envy and disdain, but not more than one instance of either. Wh
 					FactoryLogic.feature.create({
 						id: 'item-thief-of-joy-9',
 						name: '',
-						description: 'The torc\'s bonus to Stamina increases to five times your highest Characteristic score. Additionally, you can have multiple instances of envy and disdain, with no limit on either.'
+						description: 'You can have multiple instances of envy and disdain, with no limit on either.'
+					}),
+					FactoryLogic.feature.createBonus({
+						id: 'item-thief-of-joy-9a',
+						field: FeatureField.Stamina,
+						valueCharacteristics: [ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ],
+						valueCharacteristicMultiplier: 5
 					})
 				]
 			}
@@ -2177,7 +2578,13 @@ Though its size and make are often debated, the sword is consistently described 
 					FactoryLogic.feature.create({
 						id: 'item-blade-of-a-thousand-years-1',
 						name: 'Suited for Victory',
-						description: 'This sword takes on the size, shape, and make that the wielder wills into it. It can be a light, medium, or heavy weapon, and you can change its weapon type and appearance as a free maneuver. Any damagedealing weapon ability using the Blade of a Thousand Years gains a +5 rolled damage bonus, and that ability always deals holy damage. Any creature vulnerable to holy damage who takes damage from this weapon is also weakened and frightened until the end of their turn.'
+						description: 'This sword takes on the size, shape, and make that the wielder wills into it. It can be a light, medium, or heavy weapon, and you can change its weapon type and appearance as a free maneuver. Any damagedealing weapon ability using the Blade of a Thousand Years always deals holy damage. Any creature vulnerable to holy damage who takes damage from this weapon is also weakened and frightened until the end of their turn.'
+					}),
+					FactoryLogic.feature.createAbilityDamage({
+						id: 'item-blade-of-a-thousand-years-1a',
+						name: '',
+						keywords: [ AbilityKeyword.Weapon, AbilityKeyword.Melee ],
+						modifier: 5
 					}),
 					FactoryLogic.feature.create({
 						id: 'item-blade-of-a-thousand-years-2',

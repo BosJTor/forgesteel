@@ -42,10 +42,12 @@ export class AbilityLogic {
 			AbilityKeyword.Ring,
 			AbilityKeyword.Rot,
 			AbilityKeyword.Routine,
+			AbilityKeyword.Scroll,
 			AbilityKeyword.Strike,
 			AbilityKeyword.Telekinesis,
 			AbilityKeyword.Telepathy,
 			AbilityKeyword.Void,
+			AbilityKeyword.Waist,
 			AbilityKeyword.Wand,
 			AbilityKeyword.Weapon,
 			KitArmor.Heavy,
@@ -77,14 +79,19 @@ export class AbilityLogic {
 		}
 
 		const bonus = (hero && ability) ? HeroLogic.getDistanceBonus(hero, ability, distance) : 0;
+		const mainBonus = distance.within ? 0 : bonus;
+		const withinBonus = distance.within ? bonus : 0;
 
 		const result = [
-			distance.type === AbilityDistanceType.Line
-				? `Line ${distance.value + bonus}x${distance.value2 + bonus}`
-				: `${distance.type} ${distance.value + bonus}`,
-			distance.within ? `within ${distance.within}` : undefined,
-			distance.qualifier
-				? `(${distance.qualifier})`
+			distance.type === AbilityDistanceType.Line ?
+				`Line ${distance.value + mainBonus}x${distance.value2 + mainBonus}`
+				:
+				`${distance.type} ${distance.value + mainBonus}`,
+			distance.within ?
+				`within ${distance.within + withinBonus}`
+				: undefined,
+			distance.qualifier ?
+				`(${distance.qualifier})`
 				: undefined
 		].filter(x => x).join(' ');
 
@@ -115,6 +122,7 @@ export class AbilityLogic {
 	static getTierEffect = (value: string, tier: number, ability: Ability, hero: Hero) => {
 		const dmgMelee = HeroLogic.getMeleeDamageBonus(hero, ability);
 		const dmgRanged = HeroLogic.getRangedDamageBonus(hero, ability);
+		const dmgBonus = HeroLogic.getFeatureDamageBonus(hero, ability);
 
 		return value
 			.split(';')
@@ -169,6 +177,8 @@ export class AbilityLogic {
 						}
 					}
 
+					value += dmgBonus;
+
 					section.toLowerCase().split(' ').forEach(token => {
 						if ((token === 'damage') || (token === 'dmg')) {
 							// Damage; ignore
@@ -205,17 +215,192 @@ export class AbilityLogic {
 					return `${total} ${damage}`;
 				}
 
-				if ([ 'weak', 'average', 'avg', 'strong' ].some(p => section.toLowerCase().includes(p))) {
-					// Modify text to remove weak / average / strong
-					return section
-						.replace(/<\s*[[({]?weak[\])}]?/, `< ${HeroLogic.calculatePotency(hero, 'weak')}`)
-						.replace(/<\s*[[({]?average[\])}]?/, `< ${HeroLogic.calculatePotency(hero, 'average')}`)
-						.replace(/<\s*[[({]?avg[\])}]?/, `< ${HeroLogic.calculatePotency(hero, 'average')}`)
-						.replace(/<\s*[[({]?strong[\])}]?/, `< ${HeroLogic.calculatePotency(hero, 'strong')}`);
-				}
-
-				return section;
+				return AbilityLogic.getTextEffect(section, hero);
 			})
 			.join('; ');
+	};
+
+	static getTextEffect = (text: string, hero: Hero) => {
+		// Modify text to remove weak / average / strong
+		text = text
+			.replace(/<\s*[[({]?weak[\])}]?/gi, `< ${HeroLogic.calculatePotency(hero, 'weak')}`)
+			.replace(/<\s*[[({]?average[\])}]?/gi, `< ${HeroLogic.calculatePotency(hero, 'average')}`)
+			.replace(/<\s*[[({]?avg[\])}]?/gi, `< ${HeroLogic.calculatePotency(hero, 'average')}`)
+			.replace(/<\s*[[({]?strong[\])}]?/gi, `< ${HeroLogic.calculatePotency(hero, 'strong')}`);
+
+		// Equal to [N times] your [Characteristic(s)] score
+		const charRegex = /equal to[^,.;:]*your[^,.;:]*score/gi;
+		[ ...text.matchAll(charRegex) ].map(r => r[0]).forEach(str => {
+			const options: number[] = [];
+			[
+				Characteristic.Might,
+				Characteristic.Agility,
+				Characteristic.Reason,
+				Characteristic.Intuition,
+				Characteristic.Presence
+			].forEach(ch => {
+				if (str.toLowerCase().includes('highest characteristic') || str.toLowerCase().includes(ch.toLowerCase())) {
+					options.push(HeroLogic.getCharacteristic(hero, ch));
+				}
+			});
+			const value = Math.max(...options);
+
+			const constant = AbilityLogic.getConstant(str);
+			const multiplier = AbilityLogic.getMultiplier(str);
+			text = text.replace(str, `equal to ${constant + (value * multiplier)}`);
+		});
+
+		// Equal to [N times] your level
+		const lvlRegex = /equal to[^,.;:]your level/gi;
+		[ ...text.matchAll(lvlRegex) ].map(r => r[0]).forEach(str => {
+			const constant = AbilityLogic.getConstant(str);
+			const value = hero.class ? hero.class.level : 1;
+			const multiplier = AbilityLogic.getMultiplier(str);
+			text = text.replace(str, `equal to ${constant + (value * multiplier)}`);
+		});
+
+		// Equal to [N times] your recovery value
+		const recRegex = /equal to[^,.;:]your recovery value/gi;
+		[ ...text.matchAll(recRegex) ].map(r => r[0]).forEach(str => {
+			const constant = AbilityLogic.getConstant(str);
+			const value = HeroLogic.getRecoveryValue(hero);
+			const multiplier = AbilityLogic.getMultiplier(str);
+			text = text.replace(str, `equal to ${constant + (value * multiplier)}`);
+		});
+
+		// Up to [N times] your speed
+		text = text.replace('a number of squares equal to your speed', 'up to your speed');
+		text = text.replace('a number of squares up to your speed', 'up to your speed');
+		const speedRegex = /up to[^,.;:]your speed/gi;
+		[ ...text.matchAll(speedRegex) ].map(r => r[0]).forEach(str => {
+			const constant = AbilityLogic.getConstant(str);
+			const value = HeroLogic.getSpeed(hero);
+			const multiplier = AbilityLogic.getMultiplier(str);
+			text = text.replace(str, `up to ${constant + (Math.floor(value * multiplier))} squares`);
+		});
+
+		return text;
+	};
+
+	static getConstant = (text: string) => {
+		let constant = 0;
+
+		const constantMatch = text.match(/(?<c>\d+)\s*(\+|plus)/);
+		if (constantMatch && constantMatch.groups) {
+			constant = parseInt(constantMatch.groups['c']);
+		}
+
+		return constant;
+	};
+
+	static getMultiplier = (text: string) => {
+		let multiplier = 1;
+		const x: { n: number, words: string[] }[] = [
+			{
+				n: 0.5,
+				words: [
+					'half'
+				]
+			},
+			{
+				n: 2,
+				words: [
+					'twice',
+					'two times',
+					'2x',
+					'2 x',
+					'2×',
+					'2 ×'
+				]
+			},
+			{
+				n: 3,
+				words: [
+					'thrice',
+					'three times',
+					'3x',
+					'3 x',
+					'3×',
+					'3 ×'
+				]
+			},
+			{
+				n: 4,
+				words: [
+					'four times',
+					'4x',
+					'4 x',
+					'4×',
+					'4 ×'
+				]
+			},
+			{
+				n: 5,
+				words: [
+					'five times',
+					'5x',
+					'5 x',
+					'5×',
+					'5 ×'
+				]
+			},
+			{
+				n: 6,
+				words: [
+					'six times',
+					'6x',
+					'6 x',
+					'6×',
+					'6 ×'
+				]
+			},
+			{
+				n: 7,
+				words: [
+					'seven times',
+					'7x',
+					'7 x',
+					'7×',
+					'7 ×'
+				]
+			},
+			{
+				n: 8,
+				words: [
+					'eight times',
+					'8x',
+					'8 x',
+					'8×',
+					'8 ×'
+				]
+			},
+			{
+				n: 9,
+				words: [
+					'nine times',
+					'9x',
+					'9 x',
+					'9×',
+					'9 ×'
+				]
+			},
+			{
+				n: 10,
+				words: [
+					'ten times',
+					'10x',
+					'10 x',
+					'10×',
+					'10 ×'
+				]
+			}
+		];
+		x.forEach(set => {
+			if (set.words.some(w => text.toLowerCase().includes(w))) {
+				multiplier = set.n;
+			}
+		});
+
+		return multiplier;
 	};
 }

@@ -17,7 +17,10 @@ A talent is limited only by the strength of their mind. Powerful psionic heroes 
 	heroicResource: 'Clarity',
 	subclassName: 'Tradition',
 	subclassCount: 1,
-	primaryCharacteristics: [ Characteristic.Reason, Characteristic.Presence ],
+	primaryCharacteristicsOptions: [
+		[ Characteristic.Reason, Characteristic.Presence ]
+	],
+	primaryCharacteristics: [],
 	featuresByLevel: [
 		{
 			level: 1,
@@ -33,13 +36,15 @@ A talent is limited only by the strength of their mind. Powerful psionic heroes 
 					field: FeatureField.Recoveries,
 					value: 8
 				}),
-				FactoryLogic.feature.createSkill({
+				FactoryLogic.feature.createSkillChoice({
 					id: 'talent-skill-a',
-					skill: 'Psionics'
+					listOptions: [ SkillList.Lore ],
+					selected: [ 'Psionics' ]
 				}),
-				FactoryLogic.feature.createSkill({
+				FactoryLogic.feature.createSkillChoice({
 					id: 'talent-skill-b',
-					skill: 'Read Person'
+					listOptions: [ SkillList.Interpersonal ],
+					selected: [ 'Read Person' ]
 				}),
 				FactoryLogic.feature.createSkillChoice({
 					id: 'talent-skill-c',
@@ -81,7 +86,7 @@ Whenever you have clarity below 0, you are strained. Some psionic abilities have
 				FactoryLogic.feature.create({
 					id: 'talent-1-4',
 					name: 'Telepathic Speech',
-					description: 'you can telepathically communicate with any creatures within the distance of your Mind Spike ability if they share a language with you and you know of each other. The receiver of your telepathic communications can choose to respond telepathically.'
+					description: 'You can telepathically communicate with any creatures within the distance of your Mind Spike ability if they share a language with you and you know of each other. The receiver of your telepathic communications can choose to respond telepathically.'
 				}),
 				FactoryLogic.feature.createChoice({
 					id: 'talent-1-5',
@@ -109,10 +114,11 @@ Whenever you have clarity below 0, you are strained. Some psionic abilities have
 							value: 1
 						},
 						{
-							feature: FactoryLogic.feature.create({
+							feature: FactoryLogic.feature.createAbilityDistance({
 								id: 'talent-1-5b',
 								name: 'Distance Augmentation',
-								description: 'You gain a +2 bonus to the distance of your ranged psionic abilities.'
+								keywords: [ AbilityKeyword.Psionic, AbilityKeyword.Ranged ],
+								modifier: 2
 							}),
 							value: 1
 						},
@@ -136,10 +142,11 @@ Whenever you have clarity below 0, you are strained. Some psionic abilities have
 							value: 1
 						},
 						{
-							feature: FactoryLogic.feature.create({
+							feature: FactoryLogic.feature.createAbilityDamage({
 								id: 'talent-1-5d',
 								name: 'Force Augmentation',
-								description: 'Your damage-dealing psionic abilities gain a +1 rolled damage bonus.'
+								keywords: [ AbilityKeyword.Psionic ],
+								modifier: 1
 							}),
 							value: 1
 						},

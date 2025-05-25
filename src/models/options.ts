@@ -1,9 +1,14 @@
+import { PanelWidth } from '../enums/panel-width';
+
 export interface Options {
 	// Hero
+	singlePage: boolean;
+	separateInventoryFeatures: boolean;
 	showSkillsInGroups: boolean;
-	showFreeStrikes: boolean;
 	showStandardAbilities: boolean;
 	dimUnavailableAbilities: boolean;
+	showSources: boolean;
+	abilityWidth: PanelWidth;
 	// Library
 	showMonstersInGroups: boolean;
 	// Monster Builder
@@ -12,8 +17,16 @@ export interface Options {
 	similarRole: boolean;
 	similarOrganization: boolean;
 	similarSize: boolean;
+	// Encounter
+	minionCount: number;
+	party: string;
 	// Encounter Difficulty
+	heroParty: string;
 	heroCount: number;
 	heroLevel: number;
 	heroVictories: number;
+	showDefeatedCombatants: boolean;
+	// Tactical Map
+	gridSize: number;
+	playerGridSize: number;
 }

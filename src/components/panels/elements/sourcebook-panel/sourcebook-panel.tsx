@@ -1,7 +1,9 @@
-import { Alert, Button, Input, Select, Space } from 'antd';
-import { CaretDownOutlined, CaretUpOutlined, CheckCircleOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined, ThunderboltOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Input, Select, Space } from 'antd';
+import { CaretDownOutlined, CaretUpOutlined, CheckCircleOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined, PlusOutlined, ThunderboltOutlined, UploadOutlined } from '@ant-design/icons';
 import { Collections } from '../../../../utils/collections';
 import { DangerButton } from '../../../controls/danger-button/danger-button';
+import { Empty } from '../../../controls/empty/empty';
+import { ErrorBoundary } from '../../../controls/error-boundary/error-boundary';
 import { Expander } from '../../../controls/expander/expander';
 import { HeaderText } from '../../../controls/header-text/header-text';
 import { Hero } from '../../../../models/hero';
@@ -140,7 +142,7 @@ export const SourcebookPanel = (props: Props) => {
 			content = (
 				<Space direction='vertical' style={{ width: '100%', paddingBottom: '5px' }}>
 					<Input
-						className={sourcebook.name === '' ? 'input-empty' : ''}
+						status={sourcebook.name === '' ? 'warning' : ''}
 						placeholder='Name'
 						allowClear={true}
 						addonAfter={<ThunderboltOutlined className='random-btn' onClick={() => setName(NameGenerator.generateName())} />}
@@ -162,12 +164,12 @@ export const SourcebookPanel = (props: Props) => {
 										extra={[
 											<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveLanguage(n, 'up'); }} />,
 											<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveLanguage(n, 'down'); }} />,
-											<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteLanguage(n); }} />
+											<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteLanguage(n); }} />
 										]}
 									>
 										<Space direction='vertical' style={{ width: '100%' }}>
 											<Input
-												className={lang.name === '' ? 'input-empty' : ''}
+												status={lang.name === '' ? 'warning' : ''}
 												placeholder='Name'
 												allowClear={true}
 												addonAfter={<ThunderboltOutlined className='random-btn' onClick={() => setLanguageName(n, NameGenerator.generateName())} />}
@@ -181,14 +183,13 @@ export const SourcebookPanel = (props: Props) => {
 							}
 							{
 								sourcebook.languages.length === 0 ?
-									<Alert
-										type='warning'
-										showIcon={true}
-										message='No languages'
-									/>
+									<Empty />
 									: null
 							}
-							<Button block={true} onClick={addLanguage}>Add a new language</Button>
+							<Button block={true} onClick={addLanguage}>
+								<PlusOutlined />
+								Add a new language
+							</Button>
 						</Space>
 					</Expander>
 					<Expander title='Skills'>
@@ -202,12 +203,12 @@ export const SourcebookPanel = (props: Props) => {
 										extra={[
 											<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveSkill(n, 'up'); }} />,
 											<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveSkill(n, 'down'); }} />,
-											<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteSkill(n); }} />
+											<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteSkill(n); }} />
 										]}
 									>
 										<Space direction='vertical' style={{ width: '100%' }}>
 											<Input
-												className={skill.name === '' ? 'input-empty' : ''}
+												status={skill.name === '' ? 'warning' : ''}
 												placeholder='Name'
 												allowClear={true}
 												addonAfter={<ThunderboltOutlined className='random-btn' onClick={() => setSkillName(n, NameGenerator.generateName())} />}
@@ -229,14 +230,13 @@ export const SourcebookPanel = (props: Props) => {
 							}
 							{
 								sourcebook.skills.length === 0 ?
-									<Alert
-										type='warning'
-										showIcon={true}
-										message='No skills'
-									/>
+									<Empty />
 									: null
 							}
-							<Button block={true} onClick={addSkill}>Add a new skill</Button>
+							<Button block={true} onClick={addSkill}>
+								<PlusOutlined />
+								Add a new skill
+							</Button>
 						</Space>
 					</Expander>
 				</Space>
@@ -260,21 +260,23 @@ export const SourcebookPanel = (props: Props) => {
 					<Button type='text' title='Show / Hide' icon={props.visible ? <EyeOutlined /> : <EyeInvisibleOutlined />} onClick={() => props.onSetVisible(sourcebook, !props.visible)} />
 					{sourcebook.isHomebrew ? <Button type='text' title='Edit' icon={<EditOutlined />} onClick={toggleEditing} /> : null}
 					<Button type='text' title='Export' icon={<UploadOutlined />} onClick={onExport} />
-					{sourcebook.isHomebrew ? <DangerButton disabled={props.heroes.some(h => h.settingIDs.includes(sourcebook.id))} mode='icon' onConfirm={onDelete} /> : null}
+					{sourcebook.isHomebrew ? <DangerButton disabled={props.heroes.some(h => h.settingIDs.includes(sourcebook.id))} mode='clear' onConfirm={onDelete} /> : null}
 				</>
 			);
 		}
 
 		return (
-			<div className='sourcebook-panel' id={sourcebook.id}>
-				<div className='content'>
-					<HeaderText tags={sourcebook.isHomebrew ? [ 'Homebrew' ] : []}>{sourcebook.name || 'Unnamed Sourcebook'}</HeaderText>
-					{content}
+			<ErrorBoundary>
+				<div className='sourcebook-panel' id={sourcebook.id}>
+					<div className='content'>
+						<HeaderText tags={sourcebook.isHomebrew ? [ 'Homebrew' ] : []}>{sourcebook.name || 'Unnamed Sourcebook'}</HeaderText>
+						{content}
+					</div>
+					<div className='action-buttons'>
+						{buttons}
+					</div>
 				</div>
-				<div className='action-buttons'>
-					{buttons}
-				</div>
-			</div>
+			</ErrorBoundary>
 		);
 	} catch (ex) {
 		console.error(ex);

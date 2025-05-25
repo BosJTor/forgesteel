@@ -1,17 +1,19 @@
-import { Feature, FeatureDamageModifierData } from '../models/feature';
-import { Monster, MonsterGroup } from '../models/monster';
+import { Monster, MonsterGroup, MonsterState } from '../models/monster';
 import { AbilityDistanceType } from '../enums/abiity-distance-type';
 import { AbilityKeyword } from '../enums/ability-keyword';
 import { Characteristic } from '../enums/characteristic';
 import { Collections } from '../utils/collections';
+import { ConditionType } from '../enums/condition-type';
 import { DamageModifierType } from '../enums/damage-modifier-type';
 import { FactoryLogic } from './factory-logic';
+import { Feature } from '../models/feature';
 import { FeatureLogic } from './feature-logic';
 import { FeatureType } from '../enums/feature-type';
 import { MonsterFeatureCategory } from '../enums/monster-feature-category';
 import { MonsterFilter } from '../models/filter';
 import { MonsterOrganizationType } from '../enums/monster-organization-type';
 import { MonsterRoleType } from '../enums/monster-role-type';
+import { Options } from '../models/options';
 import { Random } from '../utils/random';
 import { Utils } from '../utils/utils';
 
@@ -775,7 +777,13 @@ export class MonsterLogic {
 		if (filter.name) {
 			const tokens = filter.name.toLowerCase().split(' ');
 			const monsterName = MonsterLogic.getMonsterName(monster);
-			if (!tokens.every(token => monsterName.toLowerCase().includes(token) || monster.keywords.some(k => k.toLowerCase().includes(token)))) {
+			if (!tokens.every(token => monsterName.toLowerCase().includes(token))) {
+				return false;
+			}
+		}
+
+		if (filter.keywords.length > 0) {
+			if (!filter.keywords.every(k => monster.keywords.includes(k))) {
 				return false;
 			}
 		}
@@ -813,10 +821,10 @@ export class MonsterLogic {
 		return true;
 	};
 
-	static getRoleMultiplier = (organization: MonsterOrganizationType) => {
+	static getRoleMultiplier = (organization: MonsterOrganizationType, options: Options) => {
 		switch (organization) {
 			case MonsterOrganizationType.Minion:
-				return 8;
+				return options.minionCount;
 		}
 
 		return 1;
@@ -841,6 +849,44 @@ export class MonsterLogic {
 		return value;
 	};
 
+	static getSpeed = (monster: Monster) => {
+		let value = monster.speed.value;
+
+		if (monster.state.conditions.some(c => [ ConditionType.Grabbed, ConditionType.Restrained ].includes(c.type))) {
+			value = 0;
+		}
+		if (monster.state.conditions.some(c => [ ConditionType.Slowed ].includes(c.type))) {
+			value = Math.min(value, 2);
+		}
+
+		return value;
+	};
+
+	static getSpeedModified = (monster: Monster) => {
+		if (monster.state.conditions.some(c => [ ConditionType.Grabbed, ConditionType.Restrained, ConditionType.Slowed ].includes(c.type))) {
+			return true;
+		}
+
+		return false;
+	};
+
+	static getConditionImmunities = (monster: Monster) => {
+		const conditions: ConditionType[] = [];
+
+		// Collate from features
+		MonsterLogic.getFeatures(monster)
+			.filter(f => f.type === FeatureType.ConditionImmunity)
+			.forEach(f => {
+				f.data.conditions.forEach(c => {
+					if (!conditions.includes(c)) {
+						conditions.push(c);
+					}
+				});
+			});
+
+		return Collections.sort(conditions, c => c);
+	};
+
 	static getDamageModifiers = (monster: Monster, type: DamageModifierType) => {
 		const modifiers: { damageType: string, value: number }[] = [];
 
@@ -848,8 +894,7 @@ export class MonsterLogic {
 		MonsterLogic.getFeatures(monster)
 			.filter(f => f.type === FeatureType.DamageModifier)
 			.forEach(f => {
-				const data = f.data as FeatureDamageModifierData;
-				data.modifiers
+				f.data.modifiers
 					.filter(dm => dm.type === type)
 					.forEach(dm => {
 						let value = dm.value;
@@ -895,6 +940,28 @@ export class MonsterLogic {
 		return 1;
 	};
 
+	static getCombatState = (monster: Monster) => {
+		const maxStamina = MonsterLogic.getStamina(monster);
+		if ((monster.role.organization !== MonsterOrganizationType.Minion) && (maxStamina > 0)) {
+			const winded = Math.floor(maxStamina / 2);
+			const currentStamina = maxStamina - monster.state.staminaDamage;
+
+			if (currentStamina <= 0) {
+				return 'dead';
+			}
+
+			if (currentStamina <= winded) {
+				return 'winded';
+			}
+
+			if (currentStamina < maxStamina) {
+				return 'injured';
+			}
+		}
+
+		return 'healthy';
+	};
+
 	static getRoleTypeDescription = (type: MonsterRoleType) => {
 		switch (type) {
 			case MonsterRoleType.Ambusher:
@@ -937,6 +1004,28 @@ export class MonsterLogic {
 			case MonsterOrganizationType.Retainer:
 				return 'A retainer is a type of follower who fights alongside the heroes. A retainer can gain levels just as heroes do, so their battlefield contributions remain relevant as the heroes advance.';
 		}
+	};
+
+	static getStaminaDescription = (monster: Monster) => {
+		let str = `${monster.stamina}`;
+
+		if (monster.state.staminaDamage > 0) {
+			str = `${Math.max(monster.stamina - monster.state.staminaDamage, 0)} / ${monster.stamina}`;
+		}
+		if (monster.state.staminaTemp > 0) {
+			str += ` +${monster.state.staminaTemp}`;
+		}
+
+		return str;
+	};
+
+	static resetState = (state: MonsterState) => {
+		state.staminaDamage = 0;
+		state.staminaTemp = 0;
+		state.conditions = [];
+		state.reactionUsed = false;
+		state.defeated = false;
+		state.captainID = undefined;
 	};
 
 	///////////////////////////////////////////////////////////////////////////

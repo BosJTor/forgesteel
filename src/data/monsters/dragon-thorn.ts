@@ -2,6 +2,7 @@ import { AbilityDistanceType } from '../../enums/abiity-distance-type';
 import { AbilityKeyword } from '../../enums/ability-keyword';
 import { Characteristic } from '../../enums/characteristic';
 import { DamageModifierType } from '../../enums/damage-modifier-type';
+import { DamageType } from '../../enums/damage-type';
 import { FactoryLogic } from '../../logic/factory-logic';
 import { MonsterGroup } from '../../models/monster';
 import { MonsterLogic } from '../../logic/monster-logic';
@@ -88,7 +89,7 @@ Despite this, some villages manage to avoid being driven from their homes or sta
 			features: [
 				FactoryLogic.feature.createDamageModifier({
 					id: 'dragon-thorn-feature-1',
-					modifiers: [ FactoryLogic.damageModifier.create({ damageType: 'Poison', modifierType: DamageModifierType.Immunity, value: 5 }) ]
+					modifiers: [ FactoryLogic.damageModifier.create({ damageType: DamageType.Poison, modifierType: DamageModifierType.Immunity, value: 5 }) ]
 				}),
 				FactoryLogic.feature.createSoloMonster({
 					id: 'dragon-thorn-feature-2',
@@ -96,7 +97,7 @@ Despite this, some villages manage to avoid being driven from their homes or sta
 				}),
 				FactoryLogic.feature.create({
 					id: 'dragon-thorn-feature-3',
-					name: 'Withering Wyrmsacle Aura',
+					name: 'Withering Wyrmscale Aura',
 					description: 'The dragon’s scales emit a 2 aura barrier of withering green magic. When a creature in the aﬀected area regains Stamina, they only regain half the Stamina. A winded creature who enters an aﬀected square or starts their turn there takes 1d6 poison damage.'
 				}),
 				FactoryLogic.feature.createAbility({

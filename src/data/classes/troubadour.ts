@@ -16,7 +16,10 @@ And beyond the mundane, there are insurmountable dangers that cause many a hero 
 	heroicResource: 'Drama',
 	subclassName: 'Class Act',
 	subclassCount: 1,
-	primaryCharacteristics: [ Characteristic.Agility, Characteristic.Presence ],
+	primaryCharacteristicsOptions: [
+		[ Characteristic.Agility, Characteristic.Presence ]
+	],
+	primaryCharacteristics: [],
 	featuresByLevel: [
 		{
 			level: 1,
@@ -32,9 +35,10 @@ And beyond the mundane, there are insurmountable dangers that cause many a hero 
 					field: FeatureField.Recoveries,
 					value: 8
 				}),
-				FactoryLogic.feature.createSkill({
+				FactoryLogic.feature.createSkillChoice({
 					id: 'troubadour-1-1',
-					skill: 'Read Person'
+					listOptions: [ SkillList.Interpersonal ],
+					selected: [ 'Read Person' ]
 				}),
 				FactoryLogic.feature.createSkillChoice({
 					id: 'troubadour-1-2',
@@ -479,9 +483,10 @@ Additionally, on each of your turns, you can use a free maneuver to communicate 
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'troubadour-sub-1-1-0',
-							skill: 'Gymnastics'
+							listOptions: [ SkillList.Exploration ],
+							selected: [ 'Gymnastics' ]
 						}),
 						FactoryLogic.feature.createAbility({
 							ability: FactoryLogic.createAbility({
@@ -596,9 +601,10 @@ Additionally, on each of your turns, you can use a free maneuver to communicate 
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'troubadour-sub-2-1-0',
-							skill: 'Brag'
+							listOptions: [ SkillList.Interpersonal ],
+							selected: [ 'Brag' ]
 						}),
 						FactoryLogic.feature.createAbility({
 							ability: FactoryLogic.createAbility({
@@ -718,9 +724,10 @@ Choose one of the following effects:
 				{
 					level: 1,
 					features: [
-						FactoryLogic.feature.createSkill({
+						FactoryLogic.feature.createSkillChoice({
 							id: 'troubadour-sub-3-1-0',
-							skill: 'Music'
+							listOptions: [ SkillList.Interpersonal ],
+							selected: [ 'Music' ]
 						}),
 						FactoryLogic.feature.createAbility({
 							ability: FactoryLogic.createAbility({

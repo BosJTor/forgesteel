@@ -2,12 +2,11 @@
 	display: flex;
     align-items: center;
     justify-content: space-between;
-	gap: 10px;
 	border-radius: 6px;
 	user-select: none;
 
 	&.disabled {
-		opacity: 0.6;
+		opacity: 0.5;
 		pointer-events: none;
 	}
 
@@ -16,6 +15,7 @@
 	}
 
 	.spin-buttons {
+		flex: 0 0 auto;
 		margin: 5px;
 
 		.spin-button {
@@ -32,6 +32,10 @@
 				background-color: rgba(0, 0, 0, 0.06);
 			}
 		}
+	}
+
+	.spin-middle {
+		flex: 1 1 0;
 	}
 }
 

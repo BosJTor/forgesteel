@@ -17,7 +17,10 @@ As a tactician, you have abilities that heal your allies and grant them increase
 	heroicResource: 'Focus',
 	subclassName: 'Tactical Doctrine',
 	subclassCount: 1,
-	primaryCharacteristics: [ Characteristic.Might, Characteristic.Reason ],
+	primaryCharacteristicsOptions: [
+		[ Characteristic.Might, Characteristic.Reason ]
+	],
+	primaryCharacteristics: [],
 	featuresByLevel: [
 		{
 			level: 1,
@@ -33,9 +36,10 @@ As a tactician, you have abilities that heal your allies and grant them increase
 					field: FeatureField.Recoveries,
 					value: 10
 				}),
-				FactoryLogic.feature.createSkill({
+				FactoryLogic.feature.createSkillChoice({
 					id: 'tactician-1-1',
-					skill: 'Lead'
+					listOptions: [ SkillList.Interpersonal ],
+					selected: [ 'Lead' ]
 				}),
 				FactoryLogic.feature.createSkillChoice({
 					id: 'tactician-1-2',
@@ -299,7 +303,7 @@ In addition, you can spend 1 focus to take one of the following free triggered a
 		}),
 		FactoryLogic.createAbility({
 			id: 'tactician-ability-12',
-			name: 'Stay [strong], and Focus',
+			name: 'Stay Strong and Focus',
 			description: 'We can do this! Keep faith and hold fast!',
 			type: FactoryLogic.type.createManeuver(),
 			keywords: [],
@@ -382,7 +386,7 @@ Each target is marked by you. You immediately force each targeted creature to ma
 										ability: FactoryLogic.createAbility({
 											id: 'tactician-sub-1-2-2b',
 											name: 'Try Me Instead',
-											description: '“Try picking on someone MY size.',
+											description: '“Try picking on someone MY size.”',
 											type: FactoryLogic.type.createAction(),
 											keywords: [ AbilityKeyword.Melee, AbilityKeyword.Strike, AbilityKeyword.Weapon ],
 											distance: [ FactoryLogic.distance.createMelee() ],

@@ -3,6 +3,7 @@ import { AbilityKeyword } from '../enums/ability-keyword';
 import { Characteristic } from '../enums/characteristic';
 import { Complication } from '../models/complication';
 import { DamageModifierType } from '../enums/damage-modifier-type';
+import { DamageType } from '../enums/damage-type';
 import { FactoryLogic } from '../logic/factory-logic';
 import { FeatureField } from '../enums/feature-field';
 import { ItemType } from '../enums/item-type';
@@ -112,7 +113,7 @@ export class ComplicationData {
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-bereaved-d',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Corruption', modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Corruption, modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -270,9 +271,10 @@ Your knowledge of your chosen field increases. When you finish this project, the
 		name: 'Crash Landed',
 		description: 'You used to flit around the stars in your own ship, but after an ugly run-in with a pirate (or a pirate hunter), you’re marooned on this backwater world. You’re prepared to carve out a life here - at least until you can hitch a ride.',
 		features: [
-			FactoryLogic.feature.createSkill({
+			FactoryLogic.feature.createSkillChoice({
 				id: 'comp-crashLanded-skill',
-				skill: 'Timescape'
+				listOptions: [ SkillList.Lore ],
+				selected: [ 'Timescape' ]
 			}),
 			FactoryLogic.feature.create({
 				id: 'comp-crashLanded-b',
@@ -300,7 +302,7 @@ Your knowledge of your chosen field increases. When you finish this project, the
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-cult-victim-d',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Corruption' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Corruption , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -362,7 +364,7 @@ Your knowledge of your chosen field increases. When you finish this project, the
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-cursedWeapon-d',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Damage' , modifierType: DamageModifierType.Weakness, value: 2 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Damage , modifierType: DamageModifierType.Weakness, value: 2 })
 				]
 			})
 		]
@@ -466,9 +468,10 @@ Your knowledge of your chosen field increases. When you finish this project, the
 		name: 'Fallen Immortal',
 		description: 'You used to be an immortal creature, dispensing justice and doing the bidding of the gods. Now, as a punishment or perhaps as a reward, you have put aside your wings and become a mortal. Your remaining years will be short, but living aside your fellow mortals gives your life new meaning.',
 		features: [
-			FactoryLogic.feature.createSkill({
+			FactoryLogic.feature.createSkillChoice({
 				id: 'comp-fallenImmortal-skill',
-				skill: 'Religion'
+				listOptions: [ SkillList.Lore ],
+				selected: [ 'Religion' ]
 			}),
 			FactoryLogic.feature.create({
 				id: 'comp-fallenImmortal-b',
@@ -543,8 +546,8 @@ Your relative has the same statistics as you do except for Renown, doesn’t gai
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-fire-and-chaos-b',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Fire' , modifierType: DamageModifierType.Immunity, value: 5 }),
-					FactoryLogic.damageModifier.create({ damageType: 'Cold' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Fire , modifierType: DamageModifierType.Immunity, value: 5 }),
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Cold , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -599,8 +602,8 @@ Your relative has the same statistics as you do except for Renown, doesn’t gai
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-frostheart-mods',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Cold' , modifierType: DamageModifierType.Immunity, value: 5 }),
-					FactoryLogic.damageModifier.create({ damageType: 'Fire' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Cold , modifierType: DamageModifierType.Immunity, value: 5 }),
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Fire , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -653,8 +656,8 @@ You can’t take this complication if you can’t be dazed.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-greening-mods',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Corruption' , modifierType: DamageModifierType.Immunity, value: 5 }),
-					FactoryLogic.damageModifier.create({ damageType: 'Fire' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Corruption , modifierType: DamageModifierType.Immunity, value: 5 }),
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Fire , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -767,7 +770,7 @@ You can’t take this complication if you can’t be dazed.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-hostBody-mods',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Fire' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Fire , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -1036,9 +1039,10 @@ You can’t take this complication if you can’t be dazed.`,
 		name: 'Master Chef',
 		description: 'Before you were a hero, you were a chef - and when you retire, you have big plans for your next restaurant or inn. In the meantime, you’re on the lookout for rare ingredients that only a traveler can find. After all, it’s food that makes the world go round.',
 		features: [
-			FactoryLogic.feature.createSkill({
+			FactoryLogic.feature.createSkillChoice({
 				id: 'comp-masterChef-skill',
-				skill: 'Cooking'
+				listOptions: [ SkillList.Crafting ],
+				selected: [ 'Cooking' ]
 			}),
 			FactoryLogic.feature.create({
 				id: 'comp-masterChef-b',
@@ -1151,9 +1155,9 @@ You can’t take this complication if you can’t be dazed.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-mundane-b',
 				modifiers: [
-					FactoryLogic.damageModifier.createPerLevel({ damageType: 'Corruption' , modifierType: DamageModifierType.Immunity, value: 1 }),
-					FactoryLogic.damageModifier.createPerLevel({ damageType: 'Holy' , modifierType: DamageModifierType.Immunity, value: 1 }),
-					FactoryLogic.damageModifier.createPerLevel({ damageType: 'Psychic' , modifierType: DamageModifierType.Immunity, value: 1 })
+					FactoryLogic.damageModifier.createPerLevel({ damageType: DamageType.Corruption , modifierType: DamageModifierType.Immunity, value: 1 }),
+					FactoryLogic.damageModifier.createPerLevel({ damageType: DamageType.Holy , modifierType: DamageModifierType.Immunity, value: 1 }),
+					FactoryLogic.damageModifier.createPerLevel({ damageType: DamageType.Psychic , modifierType: DamageModifierType.Immunity, value: 1 })
 				]
 			}),
 			FactoryLogic.feature.create({
@@ -1226,8 +1230,8 @@ You can’t take this complication if you can’t be dazed.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-primordial-sickness-b',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Poison' , modifierType: DamageModifierType.Immunity, value: 5 }),
-					FactoryLogic.damageModifier.create({ damageType: 'Corruption' , modifierType: DamageModifierType.Immunity, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Poison , modifierType: DamageModifierType.Immunity, value: 5 }),
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Corruption , modifierType: DamageModifierType.Immunity, value: 5 })
 				]
 			}),
 			FactoryLogic.feature.createBonus({
@@ -1335,14 +1339,15 @@ You can’t take this complication if you can’t be dazed.`,
 		name: 'Raised by Beasts',
 		description: 'You were orphaned or lost in the wild, and a friendly animal pack (perhaps apes, bears, or wolves) took you in. Returning to so-called civilization was a shock, but you’re determined to learn all you can about your own kind.',
 		features: [
-			FactoryLogic.feature.createSkill({
+			FactoryLogic.feature.createSkillChoice({
 				id: 'comp-raisedByBeasts-skill',
-				skill: 'Animal Handling'
+				listOptions: [ SkillList.Interpersonal ],
+				selected: [ 'Handle Animals' ]
 			}),
 			FactoryLogic.feature.create({
 				id: 'comp-raisedByBeasts-b',
 				name: 'Raised by Beasts Benefit',
-				description: 'Choose an animal type, such as wolf. You can communicate with this animal as if you shared a language, and animals of this type are not initially hostile to you unless they’re supernaturally compelled to be. You gain an edge when you use Animal Handling to interact with this animal.'
+				description: 'Choose an animal type, such as wolf. You can communicate with this animal as if you shared a language, and animals of this type are not initially hostile to you unless they’re supernaturally compelled to be. You gain an edge when you use Handle Animals to interact with this animal.'
 			}),
 			FactoryLogic.feature.create({
 				id: 'comp-raisedByBeasts-d',
@@ -1414,7 +1419,7 @@ You can’t take this complication if you can’t be dazed.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-rogueTalent-d',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Psychic' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Psychic , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -1522,7 +1527,7 @@ You can’t take this complication if you can’t be dazed.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-sewerFolk-d',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Poison' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Poison , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -1541,7 +1546,7 @@ You can’t take this complication if you can’t be dazed.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-shadowBorn-d',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Holy' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Holy , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -1624,13 +1629,11 @@ You can’t take this complication if you can’t be dazed.`,
 		name: 'Silent Sentinel',
 		description: 'You were trained by a group of spies who psionically infused silence into your every step and enhanced your ability to hear distant whispers. It wasn’t until you got caught by an elementalist who blasted you with thunder that you learned the enhanced hearing had some nasty side effects.',
 		features: [
-			FactoryLogic.feature.createSkill({
+			FactoryLogic.feature.createSkillChoice({
 				id: 'comp-silentSentinel-skill1',
-				skill: 'Eavesdrop'
-			}),
-			FactoryLogic.feature.createSkill({
-				id: 'comp-silentSentinel-skill2',
-				skill: 'Sneak'
+				listOptions: [ SkillList.Intrigue ],
+				count: 2,
+				selected: [ 'Eavesdrop', 'Sneak' ]
 			}),
 			FactoryLogic.feature.createSkillChoice({
 				id: 'comp-silentSentinel-skill3',
@@ -1649,7 +1652,7 @@ You can’t take this complication if you can’t be dazed.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-silentSentinel-mod',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Sonic' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Sonic , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -1717,7 +1720,7 @@ Note: Stormwight furies can’t take this complication.`,
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-stoneCursed-mod2',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Sonic' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Sonic , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -1963,7 +1966,7 @@ Whenever you take a respite, make a Reason power roll.
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-waterborn-mod',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Lightning' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Lightning , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]
@@ -1982,7 +1985,7 @@ Whenever you take a respite, make a Reason power roll.
 			FactoryLogic.feature.createDamageModifier({
 				id: 'comp-wodewalker-d',
 				modifiers: [
-					FactoryLogic.damageModifier.create({ damageType: 'Fire' , modifierType: DamageModifierType.Weakness, value: 5 })
+					FactoryLogic.damageModifier.create({ damageType: DamageType.Fire , modifierType: DamageModifierType.Weakness, value: 5 })
 				]
 			})
 		]

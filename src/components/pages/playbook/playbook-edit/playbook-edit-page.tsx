@@ -1,12 +1,14 @@
 import { Alert, Button, Divider, Flex, Input, Popover, Select, Space, Tabs } from 'antd';
-import { CaretDownOutlined, CaretUpOutlined, CloseOutlined, PlusOutlined, SaveOutlined, SettingOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { Encounter, EncounterGroup, EncounterSlot, TerrainSlot } from '../../../../models/encounter';
+import { CaretDownOutlined, CaretUpOutlined, CloseOutlined, DownOutlined, InfoCircleOutlined, PlusOutlined, SaveOutlined, SettingOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Encounter, EncounterGroup, EncounterObjective, EncounterSlot, TerrainSlot } from '../../../../models/encounter';
 import { Monster, MonsterGroup } from '../../../../models/monster';
 import { MonsterFilter, TerrainFilter } from '../../../../models/filter';
+import { MonsterInfo, TerrainInfo } from '../../../controls/token/token';
 import { Playbook, PlaybookElementKind } from '../../../../models/playbook';
 import { ReactNode, useState } from 'react';
 import { Adventure } from '../../../../models/adventure';
 import { AdventurePanel } from '../../../panels/elements/adventure-panel/adventure-panel';
+import { AppFooter } from '../../../panels/app-footer/app-footer';
 import { AppHeader } from '../../../panels/app-header/app-header';
 import { Badge } from '../../../controls/badge/badge';
 import { Characteristic } from '../../../../enums/characteristic';
@@ -14,15 +16,20 @@ import { Collections } from '../../../../utils/collections';
 import { DangerButton } from '../../../controls/danger-button/danger-button';
 import { DropdownButton } from '../../../controls/dropdown-button/dropdown-button';
 import { Element } from '../../../../models/element';
+import { ElementEditPanel } from '../../../panels/edit/element-edit/element-edit-panel';
+import { Empty } from '../../../controls/empty/empty';
 import { EncounterDifficultyPanel } from '../../../panels/encounter-difficulty/encounter-difficulty-panel';
 import { EncounterLogic } from '../../../../logic/encounter-logic';
+import { EncounterObjectiveData } from '../../../../data/encounter-objective-data';
 import { EncounterPanel } from '../../../panels/elements/encounter-panel/encounter-panel';
+import { ErrorBoundary } from '../../../controls/error-boundary/error-boundary';
 import { Expander } from '../../../controls/expander/expander';
 import { FactoryLogic } from '../../../../logic/factory-logic';
 import { FeaturePanel } from '../../../panels/elements/feature-panel/feature-panel';
 import { Field } from '../../../controls/field/field';
 import { Format } from '../../../../utils/format';
 import { HeaderText } from '../../../controls/header-text/header-text';
+import { Hero } from '../../../../models/hero';
 import { MonsterFilterPanel } from '../../../panels/monster-filter/monster-filter-panel';
 import { MonsterLogic } from '../../../../logic/monster-logic';
 import { MonsterPanel } from '../../../panels/elements/monster-panel/monster-panel';
@@ -38,16 +45,17 @@ import { NumberSpin } from '../../../controls/number-spin/number-spin';
 import { Options } from '../../../../models/options';
 import { OptionsPanel } from '../../../panels/options/options-panel';
 import { PanelMode } from '../../../../enums/panel-mode';
-import { PlaybookLogic } from '../../../../logic/playbook-logic';
-import { Plot } from '../../../../models/plot';
-import { PlotEditPanel } from '../../../panels/edit/plot-edit-panel/plot-edit-panel';
 import { SelectablePanel } from '../../../controls/selectable-panel/selectable-panel';
 import { Sourcebook } from '../../../../models/sourcebook';
 import { SourcebookLogic } from '../../../../logic/sourcebook-logic';
+import { TacticalMap } from '../../../../models/tactical-map';
+import { TacticalMapDisplayType } from '../../../../enums/tactical-map-display-type';
+import { TacticalMapPanel } from '../../../panels/elements/tactical-map-panel/tactical-map-panel';
 import { Terrain } from '../../../../models/terrain';
 import { TerrainFilterPanel } from '../../../panels/terrain-filter/terrain-filter-panel';
 import { TerrainLogic } from '../../../../logic/terrain-logic';
 import { TerrainPanel } from '../../../panels/elements/terrain-panel/terrain-panel';
+import { Toggle } from '../../../controls/toggle/toggle';
 import { Utils } from '../../../../utils/utils';
 import { useNavigation } from '../../../../hooks/use-navigation';
 import { useParams } from 'react-router';
@@ -57,10 +65,12 @@ import './playbook-edit-page.scss';
 interface Props {
 	playbook: Playbook;
 	sourcebooks: Sourcebook[];
+	heroes: Hero[];
 	options: Options;
 	showDirectory: () => void;
 	showAbout: () => void;
 	showRoll: () => void;
+	showReference: () => void;
 	showMonster: (monster: Monster, monsterGroup: MonsterGroup) => void;
 	showTerrain: (terrain: Terrain, upgradeIDs: string[]) => void;
 	saveChanges: (kind: PlaybookElementKind, element: Element) => void;
@@ -84,6 +94,9 @@ export const PlaybookEditPage = (props: Props) => {
 				break;
 			case 'negotiation':
 				original = props.playbook.negotiations.find(e => e.id === elementID)!;
+				break;
+			case 'tactical-map':
+				original = props.playbook.tacticalMaps.find(e => e.id === elementID)!;
 				break;
 		}
 		return Utils.copy(original);
@@ -113,7 +126,7 @@ export const PlaybookEditPage = (props: Props) => {
 			<Space direction='vertical' style={{ width: '100%' }}>
 				<HeaderText>Name</HeaderText>
 				<Input
-					className={element.name === '' ? 'input-empty' : ''}
+					status={element.name === '' ? 'warning' : ''}
 					placeholder='Name'
 					allowClear={true}
 					addonAfter={<ThunderboltOutlined className='random-btn' onClick={() => setName(NameGenerator.generateName())} />}
@@ -122,188 +135,6 @@ export const PlaybookEditPage = (props: Props) => {
 				/>
 				<HeaderText>Description</HeaderText>
 				<MultiLine label='Description' value={element.description} onChange={setDescription} />
-			</Space>
-		);
-	};
-
-	const getAdventurePartySection = () => {
-		const adventure = element as Adventure;
-
-		const setCount = (value: number) => {
-			const copy = Utils.copy(element) as Adventure;
-			copy.party.count = value;
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const setLevel = (value: number) => {
-			const copy = Utils.copy(element) as Adventure;
-			copy.party.level = value;
-			setElement(copy);
-			setDirty(true);
-		};
-
-		return (
-			<Space direction='vertical' style={{ width: '100%' }}>
-				<HeaderText>Number of Heroes</HeaderText>
-				<NumberSpin min={1} value={adventure.party.count} onChange={setCount} />
-				<HeaderText>Hero Level</HeaderText>
-				<NumberSpin min={1} max={10} value={adventure.party.level} onChange={setLevel} />
-			</Space>
-		);
-	};
-
-	const getAdventureIntroductionSection = () => {
-		const adventure = element as Adventure;
-
-		const addSection = () => {
-			const copy = Utils.copy(element) as Adventure;
-			copy.introduction.push(FactoryLogic.createElement());
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const setSectionName = (index: number, value: string) => {
-			const copy = Utils.copy(element) as Adventure;
-			const m = copy.introduction[index];
-			m.name = value;
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const setSectionDescription = (index: number, value: string) => {
-			const copy = Utils.copy(element) as Adventure;
-			const m = copy.introduction[index];
-			m.description = value;
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const moveSection = (index: number, direction: 'up' | 'down') => {
-			const copy = Utils.copy(element) as Adventure;
-			copy.introduction = Collections.move(copy.introduction, index, direction);
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const deleteSection = (id: string) => {
-			const copy = Utils.copy(element) as Adventure;
-			copy.introduction = copy.introduction.filter(section => section.id !== id);
-			setElement(copy);
-			setDirty(true);
-		};
-
-		return (
-			<Space direction='vertical' style={{ width: '100%' }}>
-				{
-					adventure.introduction.map((section, n) => (
-						<Expander
-							key={section.id}
-							title={section.name || 'Unnamed Section'}
-							extra={[
-								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveSection(n, 'up'); }} />,
-								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveSection(n, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteSection(section.id); }} />
-							]}
-						>
-							<HeaderText>Section</HeaderText>
-							<Space direction='vertical' style={{ width: '100%' }}>
-								<Input
-									className={section.name === '' ? 'input-empty' : ''}
-									placeholder='Name'
-									allowClear={true}
-									value={section.name}
-									onChange={e => setSectionName(n, e.target.value)}
-								/>
-								<MultiLine label='Description' value={section.description} onChange={value => setSectionDescription(n, value)} />
-							</Space>
-						</Expander>
-					))
-				}
-				{
-					adventure.introduction.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No introduction sections'
-						/>
-						: null
-				}
-				<Button block={true} onClick={addSection}>Add a section</Button>
-			</Space>
-		);
-	};
-
-	const getAdventurePlotSection = () => {
-		const adventure = element as Adventure;
-
-		const addPlotPoint = () => {
-			const copy = Utils.copy(element) as Adventure;
-			copy.plot.plots.push(FactoryLogic.createAdventurePlot());
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const changePlotPoint = (plot: Plot) => {
-			const copy = Utils.copy(element) as Adventure;
-			const parent = PlaybookLogic.getPlotPointParent(copy.plot, plot.id);
-			if (parent) {
-				const index = parent.plots.findIndex(p => p.id === plot.id);
-				if (index !== -1) {
-					parent.plots[index] = plot;
-				}
-				setElement(copy);
-				setDirty(true);
-			}
-		};
-
-		const movePlotPoint = (index: number, direction: 'up' | 'down') => {
-			const copy = Utils.copy(element) as Adventure;
-			copy.plot.plots = Collections.move(copy.plot.plots, index, direction);
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const deletePlotPoint = (id: string) => {
-			const copy = Utils.copy(element) as Adventure;
-			copy.plot.plots = copy.plot.plots.filter(p => p.id !== id);
-			setElement(copy);
-			setDirty(true);
-		};
-
-		return (
-			<Space direction='vertical' style={{ width: '100%' }}>
-				{
-					adventure.plot.plots.map((p, n) => (
-						<Expander
-							key={n}
-							title={p.name || 'Unnamed Plot Point'}
-							extra={[
-								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); movePlotPoint(n, 'up'); }} />,
-								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); movePlotPoint(n, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deletePlotPoint(p.id); }} />
-							]}
-						>
-							<PlotEditPanel
-								plot={p}
-								adventure={adventure}
-								playbook={props.playbook}
-								sourcebooks={props.sourcebooks}
-								onChange={changePlotPoint}
-							/>
-						</Expander>
-					))
-				}
-				{
-					adventure.introduction.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No plot points'
-						/>
-						: null
-				}
-				<Button block={true} onClick={addPlotPoint}>Add a plot point</Button>
 			</Space>
 		);
 	};
@@ -380,7 +211,7 @@ export const PlaybookEditPage = (props: Props) => {
 				return (
 					<div key={slot.id} className='slot-row'>
 						<div className='content'>
-							<MonsterPanel monster={monster} monsterGroup={monsterGroup} />
+							<MonsterPanel monster={monster} monsterGroup={monsterGroup} options={props.options} extra={<Button type='text' icon={<InfoCircleOutlined />} onClick={() => props.showMonster(monster, monsterGroup)} />} />
 							{
 								monsterGroup.addOns.length > 0 ?
 									<Expander title='Customize'>
@@ -390,7 +221,16 @@ export const PlaybookEditPage = (props: Props) => {
 											placeholder='Select'
 											mode='multiple'
 											options={Collections.sort(monsterGroup.addOns, a => a.name).map(a => ({ value: a.id, label: a.name, feature: a, cost: a.data.cost }))}
-											optionRender={option => <FeaturePanel feature={option.data.feature} cost={option.data.cost} mode={PanelMode.Full} />}
+											optionRender={option => <FeaturePanel feature={option.data.feature} options={props.options} cost={option.data.cost} mode={PanelMode.Full} />}
+											showSearch={true}
+											filterOption={(input, option) => {
+												const strings = option ?
+													[
+														option.label
+													]
+													: [];
+												return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+											}}
 											value={slot.customization.addOnIDs}
 											onChange={ids => setSlotAddOnIDs(group.id, slot.id, ids)}
 										/>
@@ -401,11 +241,10 @@ export const PlaybookEditPage = (props: Props) => {
 						<div className='actions'>
 							<NumberSpin
 								value={slot.count}
-								format={value => (value * MonsterLogic.getRoleMultiplier(monster.role.organization)).toString()}
+								format={value => (value * MonsterLogic.getRoleMultiplier(monster.role.organization, props.options)).toString()}
 								onChange={value => setSlotCount(group.id, slot.id, value)}
 							/>
 							<Divider />
-							<Button block={true} onClick={() => props.showMonster(monster, monsterGroup)}>Details</Button>
 							<DropdownButton
 								label='Move To'
 								items={[
@@ -458,15 +297,17 @@ export const PlaybookEditPage = (props: Props) => {
 				{
 					encounter.groups.map((group, n) => (
 						<div key={group.id} className='group-row'>
-							{encounter.groups.length > 1 ? <HeaderText>Group {(n + 1).toString()}</HeaderText> : null}
+							<HeaderText
+								extra={[
+									<DangerButton key='delete' mode='clear' label='Delete Group' onConfirm={() => deleteGroup(group)} />
+								]}
+							>
+								Group {(n + 1).toString()}
+							</HeaderText>
 							{group.slots.map(slot => getSlot(slot, group))}
 							{
 								group.slots.length === 0 ?
-									<Alert
-										type='warning'
-										showIcon={true}
-										message='No monsters in this group'
-									/>
+									<Empty />
 									: null
 							}
 							{
@@ -487,7 +328,6 @@ export const PlaybookEditPage = (props: Props) => {
 									/>
 									: null
 							}
-							{encounter.groups.length > 1 ? <DangerButton block={true} label='Delete Group' onConfirm={() => deleteGroup(group)} /> : null}
 						</div>
 					))
 				}
@@ -544,6 +384,15 @@ export const PlaybookEditPage = (props: Props) => {
 											mode='multiple'
 											options={Collections.sort(terrain.upgrades, a => a.label).map(a => ({ value: a.id, label: a.label, cost: a.cost }))}
 											optionRender={option => <Flex align='center' gap={8}><div className='ds-text'>{option.data.label}</div><Badge>+{option.data.cost} EV</Badge></Flex>}
+											showSearch={true}
+											filterOption={(input, option) => {
+												const strings = option ?
+													[
+														option.label
+													]
+													: [];
+												return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+											}}
 											value={slot.upgradeIDs}
 											onChange={ids => setTerrainUpgradeIDs(slot.id, ids)}
 										/>
@@ -587,78 +436,165 @@ export const PlaybookEditPage = (props: Props) => {
 		);
 	};
 
-	const getNegotiationDetailsSection = () => {
-		const negotiation = element as Negotiation;
+	const getEncounterObjectiveSection = () => {
+		const encounter = element as Encounter;
 
-		const setImpression = (value: number) => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.impression = value;
+		const setObjective = (value: EncounterObjective | null) => {
+			const copy = Utils.copy(element) as Encounter;
+			copy.objective = Utils.copy(value);
 			setElement(copy);
 			setDirty(true);
 		};
 
-		const setInterest = (value: number) => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.interest = value;
-			setElement(copy);
-			setDirty(true);
+		const setObjectiveName = (value: string) => {
+			const copy = Utils.copy(element) as Encounter;
+			if (copy.objective) {
+				copy.objective.name = value;
+				setElement(copy);
+				setDirty(true);
+			}
 		};
 
-		const setPatience = (value: number) => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.patience = value;
-			setElement(copy);
-			setDirty(true);
+		const setObjectiveDescription = (value: string) => {
+			const copy = Utils.copy(element) as Encounter;
+			if (copy.objective) {
+				copy.objective.description = value;
+				setElement(copy);
+				setDirty(true);
+			}
+		};
+
+		const setObjectiveDifficultyModifier = (value: string) => {
+			const copy = Utils.copy(element) as Encounter;
+			if (copy.objective) {
+				copy.objective.difficultyModifier = value;
+				setElement(copy);
+				setDirty(true);
+			}
+		};
+
+		const setObjectiveSuccessCondition = (value: string) => {
+			const copy = Utils.copy(element) as Encounter;
+			if (copy.objective) {
+				copy.objective.successCondition = value;
+				setElement(copy);
+				setDirty(true);
+			}
+		};
+
+		const setObjectiveFailureCondition = (value: string) => {
+			const copy = Utils.copy(element) as Encounter;
+			if (copy.objective) {
+				copy.objective.failureCondition = value;
+				setElement(copy);
+				setDirty(true);
+			}
+		};
+
+		const setObjectiveVictories = (value: string) => {
+			const copy = Utils.copy(element) as Encounter;
+			if (copy.objective) {
+				copy.objective.victories = value;
+				setElement(copy);
+				setDirty(true);
+			}
 		};
 
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
-				<NumberSpin label='Impression' min={0} max={15} value={negotiation.impression} onChange={setImpression} />
-				<NumberSpin label='Interest' min={0} max={5} value={negotiation.interest} onChange={setInterest} />
-				<NumberSpin label='Patience' min={0} max={5} value={negotiation.patience} onChange={setPatience} />
+				<Flex align='center' justify='space-between' gap={10}>
+					<Toggle label='Specify an encounter objective' value={!!encounter.objective} onChange={value => setObjective(value ? FactoryLogic.createEncounterObjective() : null)} />
+					<Popover
+						trigger='click'
+						content={(
+							<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '10px' }}>
+								{
+									[
+										EncounterObjectiveData.diminishNumbers,
+										EncounterObjectiveData.defeatFoe,
+										EncounterObjectiveData.getThing,
+										EncounterObjectiveData.destroyThing,
+										EncounterObjectiveData.saveAnother,
+										EncounterObjectiveData.escort,
+										EncounterObjectiveData.holdThemOff,
+										EncounterObjectiveData.assaultDefenses,
+										EncounterObjectiveData.stopAction,
+										EncounterObjectiveData.completeAction
+									].map(o => (
+										<Button key={o.id} block={true} onClick={() => setObjective(o)}>{o.name}</Button>
+									))
+								}
+							</div>
+						)}
+					>
+						<Button>
+							Common Objectives
+							<DownOutlined />
+						</Button>
+					</Popover>
+				</Flex>
+				{
+					encounter.objective ?
+						<>
+							<HeaderText>Name</HeaderText>
+							<Input
+								placeholder='Name'
+								allowClear={true}
+								value={encounter.objective.name}
+								onChange={e => setObjectiveName(e.target.value)}
+							/>
+							<HeaderText>Description</HeaderText>
+							<MultiLine label='Description' value={encounter.objective.description} onChange={setObjectiveDescription} />
+							<HeaderText>Difficulty Modifier</HeaderText>
+							<MultiLine label='Difficulty Modifier' value={encounter.objective.difficultyModifier} onChange={setObjectiveDifficultyModifier} />
+							<HeaderText>Success Condition</HeaderText>
+							<MultiLine label='Success Condition' value={encounter.objective.successCondition} onChange={setObjectiveSuccessCondition} />
+							<HeaderText>Failure Condition</HeaderText>
+							<MultiLine label='Failure Condition' value={encounter.objective.failureCondition} onChange={setObjectiveFailureCondition} />
+							<HeaderText>Victories</HeaderText>
+							<MultiLine label='Victories' value={encounter.objective.victories} onChange={setObjectiveVictories} />
+						</>
+						: null
+				}
 			</Space>
 		);
 	};
 
-	const getNegotiationMotivationsSection = () => {
-		const negotiation = element as Negotiation;
+	const getEncounterNotesSection = () => {
+		const encounter = element as Encounter;
 
-		const addMotivation = () => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.motivations.push({
-				trait: NegotiationTrait.Benevolence,
+		const addNote = () => {
+			const copy = Utils.copy(encounter) as Encounter;
+			copy.notes.push({
+				id: Utils.guid(),
+				name: '',
 				description: ''
 			});
 			setElement(copy);
 			setDirty(true);
 		};
 
-		const setMotivationTrait = (index: number, value: NegotiationTrait) => {
-			const copy = Utils.copy(element) as Negotiation;
-			const m = copy.motivations[index];
-			m.trait = value;
+		const changeNote = (notes: Element) => {
+			const copy = Utils.copy(encounter) as Encounter;
+			const index = copy.notes.findIndex(i => i.id === notes.id);
+			if (index !== -1) {
+				copy.notes[index] = notes;
+			}
 			setElement(copy);
 			setDirty(true);
 		};
 
-		const setMotivationDescription = (index: number, value: string) => {
-			const copy = Utils.copy(element) as Negotiation;
-			const m = copy.motivations[index];
-			m.description = value;
+		const moveNote = (notes: Element, direction: 'up' | 'down') => {
+			const copy = Utils.copy(encounter) as Encounter;
+			const index = copy.notes.findIndex(i => i.id === notes.id);
+			copy.notes = Collections.move(copy.notes, index, direction);
 			setElement(copy);
 			setDirty(true);
 		};
 
-		const moveMotivation = (index: number, direction: 'up' | 'down') => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.motivations = Collections.move(copy.motivations, index, direction);
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const deleteMotivation = (trait: NegotiationTrait) => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.motivations = copy.motivations.filter(m => m.trait !== trait);
+		const deleteNote = (notes: Element) => {
+			const copy = Utils.copy(encounter) as Encounter;
+			copy.notes = copy.notes.filter(i => i.id !== notes.id);
 			setElement(copy);
 			setDirty(true);
 		};
@@ -666,126 +602,32 @@ export const PlaybookEditPage = (props: Props) => {
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
 				{
-					negotiation.motivations.map((m, n) => (
+					encounter.notes.map(i => (
 						<Expander
-							key={`m${n}`}
-							title={m.trait}
+							key={i.id}
+							title={i.name || 'Unnamed Note'}
 							extra={[
-								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveMotivation(n, 'up'); }} />,
-								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveMotivation(n, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteMotivation(m.trait); }} />
+								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveNote(i, 'up'); }} />,
+								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveNote(i, 'down'); }} />,
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteNote(i); }} />
 							]}
 						>
-							<HeaderText>Motivation</HeaderText>
-							<Space direction='vertical' style={{ width: '100%' }}>
-								<Select
-									style={{ width: '100%' }}
-									placeholder='Trait'
-									options={[ NegotiationTrait.Benevolence, NegotiationTrait.Discovery, NegotiationTrait.Freedom, NegotiationTrait.Greed, NegotiationTrait.HigherAuthority, NegotiationTrait.Justice, NegotiationTrait.Legacy, NegotiationTrait.Peace, NegotiationTrait.Power, NegotiationTrait.Protection, NegotiationTrait.Revelry, NegotiationTrait.Vengeance ].map(nt => ({ label: nt, value: nt, desc: NegotiationLogic.getMotivationDescription(nt) }))}
-									optionRender={option => <Field label={option.data.label} value={option.data.desc} />}
-									value={m.trait}
-									onChange={t => setMotivationTrait(n, t)}
-								/>
-								<MultiLine label='Description' value={m.description} onChange={value => setMotivationDescription(n, value)} />
-							</Space>
+							<ElementEditPanel
+								element={i}
+								onChange={changeNote}
+							/>
 						</Expander>
 					))
 				}
 				{
-					negotiation.motivations.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No motivations'
-						/>
+					encounter.notes.length === 0 ?
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addMotivation}>Add a motivation</Button>
-			</Space>
-		);
-	};
-
-	const getNegotiationPitfallsSection = () => {
-		const negotiation = element as Negotiation;
-
-		const addPitfall = () => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.pitfalls.push({
-				trait: NegotiationTrait.Benevolence,
-				description: ''
-			});
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const setPitfallTrait = (index: number, value: NegotiationTrait) => {
-			const copy = Utils.copy(element) as Negotiation;
-			const m = copy.pitfalls[index];
-			m.trait = value;
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const setPitfallDescription = (index: number, value: string) => {
-			const copy = Utils.copy(element) as Negotiation;
-			const m = copy.pitfalls[index];
-			m.description = value;
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const movePitfall = (index: number, direction: 'up' | 'down') => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.pitfalls = Collections.move(copy.pitfalls, index, direction);
-			setElement(copy);
-			setDirty(true);
-		};
-
-		const deletePitfall = (trait: NegotiationTrait) => {
-			const copy = Utils.copy(element) as Negotiation;
-			copy.pitfalls = copy.pitfalls.filter(m => m.trait !== trait);
-			setElement(copy);
-			setDirty(true);
-		};
-
-		return (
-			<Space direction='vertical' style={{ width: '100%' }}>
-				{
-					negotiation.pitfalls.map((p, n) => (
-						<Expander
-							key={`p${n}`}
-							title={p.trait}
-							extra={[
-								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); movePitfall(n, 'up'); }} />,
-								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); movePitfall(n, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deletePitfall(p.trait); }} />
-							]}
-						>
-							<HeaderText>Pitfall</HeaderText>
-							<Space direction='vertical' style={{ width: '100%' }}>
-								<Select
-									style={{ width: '100%' }}
-									placeholder='Trait'
-									options={[ NegotiationTrait.Benevolence, NegotiationTrait.Discovery, NegotiationTrait.Freedom, NegotiationTrait.Greed, NegotiationTrait.HigherAuthority, NegotiationTrait.Justice, NegotiationTrait.Legacy, NegotiationTrait.Peace, NegotiationTrait.Power, NegotiationTrait.Protection, NegotiationTrait.Revelry, NegotiationTrait.Vengeance ].map(nt => ({ label: nt, value: nt, desc: NegotiationLogic.getMotivationDescription(nt) }))}
-									optionRender={option => <Field label={option.data.label} value={option.data.desc} />}
-									value={p.trait}
-									onChange={t => setPitfallTrait(n, t)}
-								/>
-								<MultiLine label='Description' value={p.description} onChange={value => setPitfallDescription(n, value)} />
-							</Space>
-						</Expander>
-					))
-				}
-				{
-					negotiation.pitfalls.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No pitfalls'
-						/>
-						: null
-				}
-				<Button block={true} onClick={addPitfall}>Add a pitfall</Button>
+				<Button block={true} onClick={addNote}>
+					<PlusOutlined />
+					Add a new note
+				</Button>
 			</Space>
 		);
 	};
@@ -1030,7 +872,7 @@ export const PlaybookEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveSection(sectionIndex, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveSection(sectionIndex, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteSection(s.id); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteSection(s.id); }} />
 							]}
 						>
 							<Tabs
@@ -1060,12 +902,12 @@ export const PlaybookEditPage = (props: Props) => {
 															extra={[
 																<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveChallenge(sectionIndex, challengeIndex, 'up'); }} />,
 																<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveChallenge(sectionIndex, challengeIndex, 'down'); }} />,
-																<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteChallenge(sectionIndex, c.id); }} />
+																<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteChallenge(sectionIndex, c.id); }} />
 															]}
 														>
 															<HeaderText>Name</HeaderText>
 															<Input
-																className={element.name === '' ? 'input-empty' : ''}
+																status={element.name === '' ? 'warning' : ''}
 																placeholder='Name'
 																allowClear={true}
 																value={c.name}
@@ -1076,17 +918,26 @@ export const PlaybookEditPage = (props: Props) => {
 															<HeaderText>Characteristics</HeaderText>
 															<Select
 																style={{ width: '100%' }}
-																className={c.characteristics.length < 2 ? 'selection-empty' : ''}
+																status={c.characteristics.length < 2 ? 'warning' : ''}
 																mode='multiple'
 																placeholder='Select characteristics'
 																options={[ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ].map(ch => ({ value: ch }))}
 																optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+																showSearch={true}
+																filterOption={(input, option) => {
+																	const strings = option ?
+																		[
+																			option.value
+																		]
+																		: [];
+																	return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+																}}
 																value={c.characteristics}
 																onChange={value => setChallengeCharacteristics(sectionIndex, challengeIndex, value)}
 															/>
 															<HeaderText>Skills</HeaderText>
 															<Input
-																className={element.name === '' ? 'input-empty' : ''}
+																status={element.name === '' ? 'warning' : ''}
 																placeholder='Skills'
 																allowClear={true}
 																value={c.skills}
@@ -1094,7 +945,7 @@ export const PlaybookEditPage = (props: Props) => {
 															/>
 															<HeaderText>Abilities</HeaderText>
 															<Input
-																className={element.name === '' ? 'input-empty' : ''}
+																status={element.name === '' ? 'warning' : ''}
 																placeholder='Skills'
 																allowClear={true}
 																value={c.abilities}
@@ -1107,14 +958,13 @@ export const PlaybookEditPage = (props: Props) => {
 												}
 												{
 													s.challenges.length === 0 ?
-														<Alert
-															type='warning'
-															showIcon={true}
-															message='No challenges'
-														/>
+														<Empty />
 														: null
 												}
-												<Button block={true} onClick={() => addChallenge(sectionIndex)}>Add a challenge</Button>
+												<Button block={true} onClick={() => addChallenge(sectionIndex)}>
+													<PlusOutlined />
+													Add a challenge
+												</Button>
 											</Space>
 										)
 									},
@@ -1133,12 +983,12 @@ export const PlaybookEditPage = (props: Props) => {
 															extra={[
 																<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveTwist(sectionIndex, twistIndex, 'up'); }} />,
 																<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveTwist(sectionIndex, twistIndex, 'down'); }} />,
-																<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteTwist(sectionIndex, t.id); }} />
+																<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteTwist(sectionIndex, t.id); }} />
 															]}
 														>
 															<HeaderText>Name</HeaderText>
 															<Input
-																className={element.name === '' ? 'input-empty' : ''}
+																status={element.name === '' ? 'warning' : ''}
 																placeholder='Name'
 																allowClear={true}
 																value={t.name}
@@ -1149,17 +999,26 @@ export const PlaybookEditPage = (props: Props) => {
 															<HeaderText>Characteristics</HeaderText>
 															<Select
 																style={{ width: '100%' }}
-																className={t.characteristics.length < 2 ? 'selection-empty' : ''}
+																status={t.characteristics.length < 2 ? 'warning' : ''}
 																mode='multiple'
 																placeholder='Select characteristics'
 																options={[ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ].map(ch => ({ value: ch }))}
 																optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+																showSearch={true}
+																filterOption={(input, option) => {
+																	const strings = option ?
+																		[
+																			option.value
+																		]
+																		: [];
+																	return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+																}}
 																value={t.characteristics}
 																onChange={value => setTwistCharacteristics(sectionIndex, twistIndex, value)}
 															/>
 															<HeaderText>Skills</HeaderText>
 															<Input
-																className={element.name === '' ? 'input-empty' : ''}
+																status={element.name === '' ? 'warning' : ''}
 																placeholder='Skills'
 																allowClear={true}
 																value={t.skills}
@@ -1167,7 +1026,7 @@ export const PlaybookEditPage = (props: Props) => {
 															/>
 															<HeaderText>Abilities</HeaderText>
 															<Input
-																className={element.name === '' ? 'input-empty' : ''}
+																status={element.name === '' ? 'warning' : ''}
 																placeholder='Skills'
 																allowClear={true}
 																value={t.abilities}
@@ -1180,14 +1039,13 @@ export const PlaybookEditPage = (props: Props) => {
 												}
 												{
 													s.challenges.length === 0 ?
-														<Alert
-															type='warning'
-															showIcon={true}
-															message='No challenges'
-														/>
+														<Empty />
 														: null
 												}
-												<Button block={true} onClick={() => addTwist(sectionIndex)}>Add a twist</Button>
+												<Button block={true} onClick={() => addTwist(sectionIndex)}>
+													<PlusOutlined />
+													Add a twist
+												</Button>
 											</Space>
 										)
 									}
@@ -1198,14 +1056,13 @@ export const PlaybookEditPage = (props: Props) => {
 				}
 				{
 					montage.sections.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No sections'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addSection}>Add a section</Button>
+				<Button block={true} onClick={addSection}>
+					<PlusOutlined />
+					Add a section
+				</Button>
 			</Space>
 		);
 	};
@@ -1246,35 +1103,299 @@ export const PlaybookEditPage = (props: Props) => {
 		);
 	};
 
+	const getNegotiationDetailsSection = () => {
+		const negotiation = element as Negotiation;
+
+		const setImpression = (value: number) => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.impression = value;
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const setInterest = (value: number) => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.interest = value;
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const setPatience = (value: number) => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.patience = value;
+			setElement(copy);
+			setDirty(true);
+		};
+
+		return (
+			<Space direction='vertical' style={{ width: '100%' }}>
+				<NumberSpin label='Impression' min={0} max={15} value={negotiation.impression} onChange={setImpression} />
+				<NumberSpin label='Interest' min={0} max={5} value={negotiation.interest} onChange={setInterest} />
+				<NumberSpin label='Patience' min={0} max={5} value={negotiation.patience} onChange={setPatience} />
+			</Space>
+		);
+	};
+
+	const getNegotiationMotivationsSection = () => {
+		const negotiation = element as Negotiation;
+
+		const addMotivation = () => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.motivations.push({
+				trait: NegotiationTrait.Benevolence,
+				description: ''
+			});
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const setMotivationTrait = (index: number, value: NegotiationTrait) => {
+			const copy = Utils.copy(element) as Negotiation;
+			const m = copy.motivations[index];
+			m.trait = value;
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const setMotivationDescription = (index: number, value: string) => {
+			const copy = Utils.copy(element) as Negotiation;
+			const m = copy.motivations[index];
+			m.description = value;
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const moveMotivation = (index: number, direction: 'up' | 'down') => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.motivations = Collections.move(copy.motivations, index, direction);
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const deleteMotivation = (trait: NegotiationTrait) => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.motivations = copy.motivations.filter(m => m.trait !== trait);
+			setElement(copy);
+			setDirty(true);
+		};
+
+		return (
+			<Space direction='vertical' style={{ width: '100%' }}>
+				{
+					negotiation.motivations.map((m, n) => (
+						<Expander
+							key={`m${n}`}
+							title={m.trait}
+							extra={[
+								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveMotivation(n, 'up'); }} />,
+								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveMotivation(n, 'down'); }} />,
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteMotivation(m.trait); }} />
+							]}
+						>
+							<HeaderText>Motivation</HeaderText>
+							<Space direction='vertical' style={{ width: '100%' }}>
+								<Select
+									style={{ width: '100%' }}
+									placeholder='Trait'
+									options={[ NegotiationTrait.Benevolence, NegotiationTrait.Discovery, NegotiationTrait.Freedom, NegotiationTrait.Greed, NegotiationTrait.HigherAuthority, NegotiationTrait.Justice, NegotiationTrait.Legacy, NegotiationTrait.Peace, NegotiationTrait.Power, NegotiationTrait.Protection, NegotiationTrait.Revelry, NegotiationTrait.Vengeance ].map(nt => ({ label: nt, value: nt, desc: NegotiationLogic.getMotivationDescription(nt) }))}
+									optionRender={option => <Field label={option.data.label} value={option.data.desc} />}
+									showSearch={true}
+									filterOption={(input, option) => {
+										const strings = option ?
+											[
+												option.label,
+												option.desc
+											]
+											: [];
+										return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+									}}
+									value={m.trait}
+									onChange={t => setMotivationTrait(n, t)}
+								/>
+								<MultiLine label='Description' value={m.description} onChange={value => setMotivationDescription(n, value)} />
+							</Space>
+						</Expander>
+					))
+				}
+				{
+					negotiation.motivations.length === 0 ?
+						<Empty />
+						: null
+				}
+				<Button block={true} onClick={addMotivation}>
+					<PlusOutlined />
+					Add a motivation
+				</Button>
+			</Space>
+		);
+	};
+
+	const getNegotiationPitfallsSection = () => {
+		const negotiation = element as Negotiation;
+
+		const addPitfall = () => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.pitfalls.push({
+				trait: NegotiationTrait.Benevolence,
+				description: ''
+			});
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const setPitfallTrait = (index: number, value: NegotiationTrait) => {
+			const copy = Utils.copy(element) as Negotiation;
+			const m = copy.pitfalls[index];
+			m.trait = value;
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const setPitfallDescription = (index: number, value: string) => {
+			const copy = Utils.copy(element) as Negotiation;
+			const m = copy.pitfalls[index];
+			m.description = value;
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const movePitfall = (index: number, direction: 'up' | 'down') => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.pitfalls = Collections.move(copy.pitfalls, index, direction);
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const deletePitfall = (trait: NegotiationTrait) => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.pitfalls = copy.pitfalls.filter(m => m.trait !== trait);
+			setElement(copy);
+			setDirty(true);
+		};
+
+		return (
+			<Space direction='vertical' style={{ width: '100%' }}>
+				{
+					negotiation.pitfalls.map((p, n) => (
+						<Expander
+							key={`p${n}`}
+							title={p.trait}
+							extra={[
+								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); movePitfall(n, 'up'); }} />,
+								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); movePitfall(n, 'down'); }} />,
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deletePitfall(p.trait); }} />
+							]}
+						>
+							<HeaderText>Pitfall</HeaderText>
+							<Space direction='vertical' style={{ width: '100%' }}>
+								<Select
+									style={{ width: '100%' }}
+									placeholder='Trait'
+									options={[ NegotiationTrait.Benevolence, NegotiationTrait.Discovery, NegotiationTrait.Freedom, NegotiationTrait.Greed, NegotiationTrait.HigherAuthority, NegotiationTrait.Justice, NegotiationTrait.Legacy, NegotiationTrait.Peace, NegotiationTrait.Power, NegotiationTrait.Protection, NegotiationTrait.Revelry, NegotiationTrait.Vengeance ].map(nt => ({ label: nt, value: nt, desc: NegotiationLogic.getPitfallDescription(nt) }))}
+									optionRender={option => <Field label={option.data.label} value={option.data.desc} />}
+									showSearch={true}
+									filterOption={(input, option) => {
+										const strings = option ?
+											[
+												option.label,
+												option.desc
+											]
+											: [];
+										return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+									}}
+									value={p.trait}
+									onChange={t => setPitfallTrait(n, t)}
+								/>
+								<MultiLine label='Description' value={p.description} onChange={value => setPitfallDescription(n, value)} />
+							</Space>
+						</Expander>
+					))
+				}
+				{
+					negotiation.pitfalls.length === 0 ?
+						<Empty />
+						: null
+				}
+				<Button block={true} onClick={addPitfall}>
+					<PlusOutlined />
+					Add a pitfall
+				</Button>
+			</Space>
+		);
+	};
+
+	const getNegotiationOutcomesSection = () => {
+		const negotiation = element as Negotiation;
+
+		const setOutcome = (index: number, value: string) => {
+			const copy = Utils.copy(element) as Negotiation;
+			copy.outcomes[index] = value;
+			setElement(copy);
+			setDirty(true);
+		};
+
+		return (
+			<Space direction='vertical' style={{ width: '100%' }}>
+				{
+					negotiation.outcomes.map((o, n) => (
+						<Expander
+							key={`o${n}`}
+							title={n}
+						>
+							<HeaderText>Outcome {n}</HeaderText>
+							<MultiLine label='Outcome' value={o} onChange={value => setOutcome(n, value)} />
+						</Expander>
+					))
+				}
+			</Space>
+		);
+	};
+
+	const getTacticalMapBuilder = () => {
+		return (
+			<div className='tactical-map-container'>
+				<TacticalMapPanel
+					map={element as TacticalMap}
+					display={TacticalMapDisplayType.DirectorEdit}
+					options={props.options}
+					mode={PanelMode.Full}
+					updateMap={map => {
+						setElement(map);
+						setDirty(true);
+					}}
+				/>
+			</div>
+		);
+	};
+
+	const getAdventureBuilder = () => {
+		return (
+			<div className='adventure-container'>
+				<AdventurePanel
+					adventure={element as Adventure}
+					mode={PanelMode.Full}
+					playbook={props.playbook}
+					sourcebooks={props.sourcebooks}
+					heroes={props.heroes}
+					options={props.options}
+					allowSelection={true}
+					onChange={(adventure: Adventure) => {
+						setElement(adventure);
+						setDirty(true);
+					}}
+				/>
+			</div>
+		);
+	};
+
+	const getEditHeaderSection = () => {
+		return null;
+	};
+
 	const getEditSection = () => {
 		switch (kind!) {
 			case 'adventure':
-				return (
-					<Tabs
-						items={[
-							{
-								key: '1',
-								label: 'Adventure',
-								children: getNameAndDescriptionSection()
-							},
-							{
-								key: '2',
-								label: 'Party',
-								children: getAdventurePartySection()
-							},
-							{
-								key: '3',
-								label: 'Introduction',
-								children: getAdventureIntroductionSection()
-							},
-							{
-								key: '4',
-								label: 'Plot',
-								children: getAdventurePlotSection()
-							}
-						]}
-					/>
-				);
+				return getAdventureBuilder();
 			case 'encounter':
 				return (
 					<Tabs
@@ -1293,6 +1414,16 @@ export const PlaybookEditPage = (props: Props) => {
 								key: '3',
 								label: 'Terrain',
 								children: getEncounterTerrainSection()
+							},
+							{
+								key: '4',
+								label: 'Objective',
+								children: getEncounterObjectiveSection()
+							},
+							{
+								key: '5',
+								label: 'Notes',
+								children: getEncounterNotesSection()
 							}
 						]}
 					/>
@@ -1320,6 +1451,11 @@ export const PlaybookEditPage = (props: Props) => {
 								key: '4',
 								label: 'Pitfalls',
 								children: getNegotiationPitfallsSection()
+							},
+							{
+								key: '5',
+								label: 'Outcomes',
+								children: getNegotiationOutcomesSection()
 							}
 						]}
 					/>
@@ -1351,6 +1487,8 @@ export const PlaybookEditPage = (props: Props) => {
 						]}
 					/>
 				);
+			case 'tactical-map':
+				return getTacticalMapBuilder();
 		}
 	};
 
@@ -1361,12 +1499,24 @@ export const PlaybookEditPage = (props: Props) => {
 	const getEncounterPreviewSection = () => {
 		return (
 			<SelectablePanel>
-				<EncounterPanel encounter={element as Encounter} playbook={props.playbook} sourcebooks={props.sourcebooks} options={props.options} mode={PanelMode.Full} />
+				<EncounterPanel
+					encounter={element as Encounter}
+					sourcebooks={props.sourcebooks}
+					heroes={props.heroes}
+					options={props.options}
+					mode={PanelMode.Full}
+				/>
 			</SelectablePanel>
 		);
 	};
 
 	const getEncounterPreviewMonstersSection = () => {
+		const setMonsterFilterName = (name: string) => {
+			const copy = Utils.copy(monsterFilter);
+			copy.name = name;
+			setMonsterFilter(copy);
+		};
+
 		const addMonster = (monster: Monster, encounterGroupID: string | null) => {
 			const copy = Utils.copy(element) as Encounter;
 
@@ -1397,9 +1547,19 @@ export const PlaybookEditPage = (props: Props) => {
 
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
+				<Input
+					placeholder='Search'
+					allowClear={true}
+					value={monsterFilter.name}
+					onChange={e => setMonsterFilterName(e.target.value)}
+				/>
 				<Expander title='Filter'>
-					<HeaderText>Filter</HeaderText>
-					<MonsterFilterPanel monsterFilter={monsterFilter} onChange={setMonsterFilter} />
+					<MonsterFilterPanel
+						monsterFilter={monsterFilter}
+						monsters={props.sourcebooks.flatMap(sb => sb.monsterGroups).flatMap(g => g.monsters)}
+						includeNameFilter={false}
+						onChange={setMonsterFilter}
+					/>
 				</Expander>
 				{
 					monsters.map(m => {
@@ -1410,40 +1570,38 @@ export const PlaybookEditPage = (props: Props) => {
 							addBtn = (
 								<Button icon={<PlusOutlined />} onClick={() => addMonster(m, null)}>Add</Button>
 							);
-						}
-						if (encounter.groups.length === 1) {
-							addBtn = (
-								<Button icon={<PlusOutlined />} onClick={() => addMonster(m, encounter.groups[0].id)}>Add</Button>
-							);
-						}
-						if (encounter.groups.length > 1) {
+						} else {
+							const groups = encounter.groups.map((group, n) => ({
+								key: group.id,
+								label: <div className='ds-text centered-text'>Group {n + 1}</div>
+							}));
+							groups.push({
+								key: '',
+								label: <div className='ds-text centered-text'>New Group</div>
+							});
 							addBtn = (
 								<DropdownButton
 									label='Add'
-									items={encounter.groups.map((group, n) => ({ key: group.id, label: <div className='ds-text centered-text'>Group {n + 1}</div> }))}
-									onClick={groupID => addMonster(m, groupID)}
+									items={groups}
+									onClick={groupID => addMonster(m, groupID !== '' ? groupID : null)}
 								/>
 							);
 						}
 
 						return (
 							<div key={m.id} className='monster-row'>
-								<MonsterPanel monster={m} monsterGroup={monsterGroup} />
-								<div className='actions'>
-									<Button block={true} onClick={() => props.showMonster(m, monsterGroup)}>Details</Button>
+								<MonsterInfo monster={m} />
+								<Flex gap={10}>
+									<Button onClick={() => props.showMonster(m, monsterGroup)}>Details</Button>
 									{addBtn}
-								</div>
+								</Flex>
 							</div>
 						);
 					})
 				}
 				{
 					monsters.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No monsters'
-						/>
+						<Empty />
 						: null
 				}
 			</Space>
@@ -1451,6 +1609,12 @@ export const PlaybookEditPage = (props: Props) => {
 	};
 
 	const getEncounterPreviewTerrainSection = () => {
+		const setTerrainFilterName = (name: string) => {
+			const copy = Utils.copy(terrainFilter);
+			copy.name = name;
+			setTerrainFilter(copy);
+		};
+
 		const addTerrain = (terrain: Terrain) => {
 			const copy = Utils.copy(element) as Encounter;
 
@@ -1462,7 +1626,8 @@ export const PlaybookEditPage = (props: Props) => {
 					id: Utils.guid(),
 					terrainID: terrain.id,
 					upgradeIDs: [],
-					count: 1
+					count: 1,
+					terrain: []
 				});
 			}
 
@@ -1474,62 +1639,59 @@ export const PlaybookEditPage = (props: Props) => {
 
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
+				<Input
+					placeholder='Search'
+					allowClear={true}
+					value={terrainFilter.name}
+					onChange={e => setTerrainFilterName(e.target.value)}
+				/>
 				<Expander title='Filter'>
-					<HeaderText>Filter</HeaderText>
-					<TerrainFilterPanel terrainFilter={terrainFilter} onChange={setTerrainFilter} />
+					<TerrainFilterPanel terrainFilter={terrainFilter} includeNameFilter={false} onChange={setTerrainFilter} />
 				</Expander>
 				{
 					terrains.map(t => {
 						return (
 							<div key={t.id} className='terrain-row'>
-								<TerrainPanel terrain={t} />
-								<div className='actions'>
-									<Button block={true} onClick={() => props.showTerrain(t, [])}>Details</Button>
+								<TerrainInfo terrain={t} />
+								<Flex gap={10}>
+									<Button onClick={() => props.showTerrain(t, [])}>Details</Button>
 									<Button icon={<PlusOutlined />} onClick={() => addTerrain(t)}>Add</Button>
-								</div>
+								</Flex>
 							</div>
 						);
 					})
 				}
 				{
 					terrains.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No terrain'
-						/>
+						<Empty />
 						: null
 				}
 			</Space>
 		);
 	};
 
-	const getEncounterPreviewDifficultySection = () => {
-		return (
-			<SelectablePanel>
-				<EncounterDifficultyPanel
-					encounter={element as Encounter}
-					sourcebooks={props.sourcebooks}
-					options={props.options}
-				/>
-			</SelectablePanel>
-		);
+	const getPreviewHeaderSection = () => {
+		if (kind === 'encounter') {
+			const strength = EncounterLogic.getStrength(element as Encounter, props.sourcebooks);
+			const difficulty = EncounterLogic.getDifficulty(strength, props.options, props.heroes);
+
+			return (
+				<Expander title='Difficulty' tags={[ difficulty ]}>
+					<EncounterDifficultyPanel
+						encounter={element as Encounter}
+						sourcebooks={props.sourcebooks}
+						heroes={props.heroes}
+						options={props.options}
+					/>
+				</Expander>
+			);
+		}
+
+		return null;
 	};
 
 	const getPreview = () => {
 		switch (kind!) {
-			case 'adventure':
-				return (
-					<SelectablePanel>
-						<AdventurePanel
-							adventure={element as Adventure}
-							mode={PanelMode.Full}
-							playbook={props.playbook}
-							sourcebooks={props.sourcebooks}
-							options={props.options}
-						/>
-					</SelectablePanel>
-				);
 			case 'encounter':
 				return (
 					<Tabs
@@ -1548,11 +1710,6 @@ export const PlaybookEditPage = (props: Props) => {
 								key: '3',
 								label: 'Terrain',
 								children: getEncounterPreviewTerrainSection()
-							},
-							{
-								key: '4',
-								label: 'Difficulty',
-								children: getEncounterPreviewDifficultySection()
 							}
 						]}
 					/>
@@ -1560,62 +1717,83 @@ export const PlaybookEditPage = (props: Props) => {
 			case 'montage':
 				return (
 					<SelectablePanel>
-						<MontagePanel montage={element as Montage} mode={PanelMode.Full} />
+						<MontagePanel
+							montage={element as Montage}
+							mode={PanelMode.Full}
+						/>
 					</SelectablePanel>
 				);
 			case 'negotiation':
 				return (
 					<SelectablePanel>
-						<NegotiationPanel negotiation={element as Negotiation} mode={PanelMode.Full} />
+						<NegotiationPanel
+							negotiation={element as Negotiation}
+							mode={PanelMode.Full}
+						/>
 					</SelectablePanel>
 				);
 		}
+
+		return null;
 	};
 
 	//#endregion
 
+	const getSubheader = () => {
+		if (kind === 'tactical-map') {
+			return 'Tactical Map';
+		}
+
+		return Format.capitalize(kind!);
+	};
+
 	try {
 		return (
-			<div className='playbook-edit-page'>
-				<AppHeader subheader={`${Format.capitalize(kind!)} Builder`} showDirectory={props.showDirectory} showAbout={props.showAbout} showRoll={props.showRoll}>
-					<Button type='primary' icon={<SaveOutlined />} disabled={!dirty} onClick={() => props.saveChanges(kind!, element)}>
-						Save Changes
-					</Button>
-					<Button icon={<CloseOutlined />} onClick={() => navigation.goToPlaybookView(kind!, element.id)}>
-						Cancel
-					</Button>
-					{
-						(kind === 'encounter') ?
-							<div className='divider' />
-							: null
-					}
-					{
-						(kind === 'encounter') ?
-							<Popover
-								trigger='click'
-								placement='bottom'
-								content={(
-									<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-										<OptionsPanel mode='encounter' options={props.options} setOptions={props.setOptions} />
-									</div>
-								)}
-							>
-								<Button icon={<SettingOutlined />}>
-									Options
-								</Button>
-							</Popover>
-							: null
-					}
-				</AppHeader>
-				<div className='playbook-edit-page-content'>
-					<div className='edit-column'>
-						{getEditSection()}
+			<ErrorBoundary>
+				<div className='playbook-edit-page'>
+					<AppHeader subheader={`${getSubheader()} Builder`} showDirectory={props.showDirectory}>
+						<Button type='primary' icon={<SaveOutlined />} disabled={!dirty} onClick={() => props.saveChanges(kind!, element)}>
+							Save Changes
+						</Button>
+						<Button icon={<CloseOutlined />} onClick={() => navigation.goToPlaybookView(kind!, element.id)}>
+							Cancel
+						</Button>
+						{
+							(kind === 'encounter') ?
+								<div className='divider' />
+								: null
+						}
+						{
+							(kind === 'encounter') || (kind === 'tactical-map') ?
+								<Popover
+									trigger='click'
+									content={<OptionsPanel mode={kind} options={props.options}heroes={props.heroes} setOptions={props.setOptions} />}
+								>
+									<Button icon={<SettingOutlined />}>
+										Options
+										<DownOutlined />
+									</Button>
+								</Popover>
+								: null
+						}
+					</AppHeader>
+					<div className='playbook-edit-page-content'>
+						<div className='edit-column'>
+							{getEditHeaderSection()}
+							{getEditSection()}
+						</div>
+						{
+							(kind !== 'adventure') && (kind !== 'tactical-map') ?
+								<div className='preview-column'>
+									{getPreviewHeaderSection()}
+									{getPreview()}
+								</div>
+								: null
+						}
 					</div>
-					<div className='preview-column'>
-						{getPreview()}
-					</div>
+					<AppFooter page='playbook' showAbout={props.showAbout} showRoll={props.showRoll} showReference={props.showReference} />
 				</div>
-			</div>
+			</ErrorBoundary>
 		);
 	} catch (ex) {
 		console.error(ex);

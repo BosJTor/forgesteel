@@ -1,9 +1,11 @@
 import { ConditionEndType, ConditionType } from '../enums/condition-type';
 import { PDFCheckBox, PDFDocument, PDFTextField, StandardFonts } from 'pdf-lib';
 import { Ability } from '../models/ability';
+import { AbilityData } from '../data/ability-data';
 import { AbilityDistanceType } from '../enums/abiity-distance-type';
 import { AbilityLogic } from '../logic/ability-logic';
 import { AbilityUsage } from '../enums/ability-usage';
+import { ClassData } from '../data/class-data';
 import { DamageModifierType } from '../enums/damage-modifier-type';
 import { Domain } from '../models/domain';
 import { Feature } from '../models/feature';
@@ -12,14 +14,12 @@ import { FormatLogic } from '../logic/format-logic';
 import { Hero } from '../models/hero';
 import { HeroLogic } from '../logic/hero-logic';
 import { Sourcebook } from '../models/sourcebook';
-import { SourcebookData } from '../data/sourcebook-data';
-import localforage from 'localforage';
 
 import pdfLandscape from '../assets/character-sheet-landscape.pdf';
 import pdfPortrait from '../assets/character-sheet-portrait.pdf';
 
 export class PDFExport {
-	static startExport = async (hero: Hero, format: 'portrait' | 'landscape') => {
+	static startExport = async (hero: Hero, sourcebooks: Sourcebook[], format: 'portrait' | 'landscape') => {
 		let file: string;
 		switch (format) {
 			case 'portrait':
@@ -42,6 +42,7 @@ export class PDFExport {
 			// This replaces characters the PDF doesn't support
 			return str
 				.toString()
+				.replace(/−/g, '-')
 				.replace(/ź/g, 'z')
 				.replace(/ń/g, 'n')
 				.replace(/č/g, 'c');
@@ -52,7 +53,7 @@ export class PDFExport {
 			AncestryTop: hero.ancestry && hero.ancestry.name,
 			CareerTop: hero.career && hero.career.name,
 			ClassTop: hero.class && hero.class.name,
-			SubclassTop: hero.class && hero.class.subclassName !== '' && hero.class.subclassName + ': ' + hero.class.subclasses.filter(s => s.selected)[0].name || null,
+			SubclassTop: hero.class && (hero.class.subclassName !== '') && (hero.class.subclasses.filter(s => s.selected).length > 0) && hero.class.subclassName + ': ' + hero.class.subclasses.filter(s => s.selected)[0].name || null,
 			Level: hero.class && hero.class.level,
 			Wealth: hero.state.wealth,
 			Renown: hero.state.renown,
@@ -79,7 +80,7 @@ export class PDFExport {
 		const toggles: { [key: string]: boolean } = {};
 		const ignoredFeatures: { [key: string]: boolean } = {};
 
-		const features = HeroLogic.getFeatures(hero) as Feature[];
+		const features = HeroLogic.getFeatures(hero).map(f => f.feature);
 
 		{
 			if (hero.class) {
@@ -95,8 +96,8 @@ export class PDFExport {
 			}
 		}
 
-		const domains = features.find(f => f.type == FeatureType.Domain)?.data?.selected as Domain[];
-		if(domains) {
+		const domains = features.find(f => f.type === FeatureType.Domain)?.data?.selected as Domain[];
+		if (domains) {
 			texts['SubclassTop'] = domains.map(d => d.name).join(', ');
 		}
 
@@ -118,7 +119,7 @@ export class PDFExport {
 			]
 		);
 
-		const GetTitle = (text: string) => text + '\n' + ('¯'.repeat(Math.ceil(font.widthOfTextAtSize(text, fontSize)/font.widthOfTextAtSize('¯', fontSize))));
+		const GetTitle = (text: string) => text + '\n' + ('¯'.repeat(Math.ceil(font.widthOfTextAtSize(text, fontSize) / font.widthOfTextAtSize('¯', fontSize))));
 
 		const CleanupOutput = (text: string) => {
 			text = text
@@ -137,7 +138,7 @@ export class PDFExport {
 			features.forEach(f => (ignoredFeatures[f.id] = true));
 			let all = '';
 			for (const feature of features) {
-				if (all != '') {
+				if (all !== '') {
 					all = all + '\n\n';
 				}
 				let text = GetTitle(feature.name) + '\n' + feature.description.replace(/^\s+/, '');
@@ -155,14 +156,14 @@ export class PDFExport {
 			const resource = hero.class && hero.class.heroicResource.toLowerCase() || 'XXX';
 			const startup = new RegExp(String.raw`\s*At the start of each of your turns during combat, you gain (.+?) ${resource}\.\s*`);
 			const heroicResourceFeature = features.find(f => f.description.match(startup));
-			if(heroicResourceFeature) {
+			if (heroicResourceFeature) {
 				const startupAmount = heroicResourceFeature.description.match(startup);
-				if(startupAmount) {
+				if (startupAmount) {
 					texts['HeroicResourcesPerTurn'] = startupAmount[1];
 				}
 				ignoredFeatures[heroicResourceFeature.id] = true;
 				let resourceGainText = 'Your resource is ' + resource + '.\n\n' + heroicResourceFeature.description.replace(startup, '');
-				if(domains) {
+				if (hero.class && (hero.class.id === ClassData.conduit.id) && domains) {
 					resourceGainText = resourceGainText + '\n' + domains.map(d => d.piety).join('');
 				}
 				texts['HeroicResourceGains'] = CleanupOutput(resourceGainText);
@@ -204,14 +205,14 @@ export class PDFExport {
 			}
 		}
 
-		texts['Features'] = ConvertFeatures(features.filter(f => !ignoredFeatures[f.id] && f.type == 'Text'));
+		texts['Features'] = ConvertFeatures(features.filter(f => !ignoredFeatures[f.id] && f.type === 'Text'));
 
 		{
 			for (const c of hero.state.conditions) {
-				if (c.type !== ConditionType.Custom) {
-					if (c.ends == ConditionEndType.EndOfTurn) {
+				if ((c.type !== ConditionType.Custom) && (c.type !== ConditionType.Quick)) {
+					if (c.ends === ConditionEndType.EndOfTurn) {
 						toggles[c.type + 'EoT'] = true;
-					} else if (c.ends == ConditionEndType.SaveEnds) {
+					} else if (c.ends === ConditionEndType.SaveEnds) {
 						toggles[c.type + 'Save'] = true;
 					}
 				}
@@ -219,17 +220,12 @@ export class PDFExport {
 		}
 
 		{
-			const homebrew = (await localforage.getItem<Sourcebook[]>(
-				'forgesteel-homebrew-settings'
-			)) as Sourcebook[];
-			const books = [ SourcebookData.core, SourcebookData.orden ];
-			if (homebrew) books.push(...homebrew);
-			texts['Skills'] = HeroLogic.getSkills(hero, books).map(s => '• ' + s.name).join('\n');
+			texts['Skills'] = HeroLogic.getSkills(hero, sourcebooks).map(s => '• ' + s.name).join('\n');
 
 			if (hero.career) {
 				texts['CareerName'] = hero.career.name;
 				const incident = hero.career.incitingIncidents.options.find(
-					o => o.id == (hero.career && hero.career.incitingIncidents.selectedID)
+					o => o.id === (hero.career && hero.career.incitingIncidents.selectedID)
 				);
 				if (incident) {
 					texts['CareerIncident'] =
@@ -249,11 +245,11 @@ export class PDFExport {
 				}
 				texts['CultureFull'] = cultureUpbringingTexts.join('\n\n');
 			}
-			const languages = HeroLogic.getLanguages(hero, books);
+			const languages = HeroLogic.getLanguages(hero, sourcebooks);
 			texts['Languages'] = languages.map(l => '• ' + l.name).join('\n');
 
 			texts['Titles'] = features
-				.filter(f => f.type == FeatureType.TitleChoice)
+				.filter(f => f.type === FeatureType.TitleChoice)
 				.map(f => f.data.selected[0])
 				.map(f => f.name)
 				.join('\n\n');
@@ -288,6 +284,7 @@ export class PDFExport {
 		}
 
 		{
+			const AddSign = (n: number) => n >= 0 ? '+' + n : n.toString();
 			const ApplyGroup = (
 				abilities: Ability[],
 				prefix: string,
@@ -300,25 +297,27 @@ export class PDFExport {
 					}
 					texts[prefix + 'Name' + i] = a.name;
 					texts[prefix + 'Target' + i] = a.target;
-					if(a.distance.length > 1 && a.distance[0].type == AbilityDistanceType.Melee && a.distance[1].type == AbilityDistanceType.Ranged) {
-						texts[prefix + 'Distance' + i] = AbilityLogic.getDistance(a.distance[0], hero, a).replace('Melee', 'M') + ' or ' + AbilityLogic.getDistance(a.distance[1], hero, a).replace('Ranged', 'R');
-					} else {
+					if ((a.distance.length > 1) && (a.distance[0].type === AbilityDistanceType.Melee) && (a.distance[1].type === AbilityDistanceType.Ranged)) {
+						const melee = AbilityLogic.getDistance(a.distance[0], hero, a).replace('Melee', 'M');
+						const ranged = AbilityLogic.getDistance(a.distance[1], hero, a).replace('Ranged', 'R');
+						texts[prefix + 'Distance' + i] = `${melee} or ${ranged}`;
+					} else if (a.distance.length > 0) {
 						texts[prefix + 'Distance' + i] = AbilityLogic.getDistance(a.distance[0], hero, a);
 					}
 					texts[prefix + 'Keywords' + i] = a.keywords.join(', ');
-					texts[prefix + 'Type' + i] = a.type.usage;
-					const details = [];
+					texts[prefix + 'Type' + i] = a.type.free ? `Free ${a.type.usage}` : a.type.usage;
+					const details = [ ...a.type.qualifiers || [] ];
 
-					if(a.preEffect) {
+					if (a.preEffect) {
 						details.push(CleanupOutput(a.preEffect.replace(/^\s+/, '')));
 					}
-					if(a.powerRoll) {
+					if (a.powerRoll) {
 						let powerRollText = '';
-					  powerRollText = powerRollText + 'Power Roll: 2d10 + ' + Math.max(...a.powerRoll.characteristic
+						powerRollText = powerRollText + 'Power Roll: 2d10 + ' + Math.max(...a.powerRoll.characteristic
 							.map(
 								c =>
 									hero.class &&
-									hero.class.characteristics.find(d => d.characteristic == c)
+									hero.class.characteristics.find(d => d.characteristic === c)
 							)
 							.map(c => (c && c.value) || 0)
 						);
@@ -340,17 +339,25 @@ export class PDFExport {
 							a,
 							hero
 						);
+
+						const dmgMelee = HeroLogic.getMeleeDamageBonus(hero, a);
+						const dmgRanged = HeroLogic.getRangedDamageBonus(hero, a);
+						if (dmgMelee && dmgRanged && ((dmgMelee.tier1 !== dmgRanged.tier1) || (dmgMelee.tier2 !== dmgRanged.tier2) || (dmgMelee.tier3 !== dmgRanged.tier3))) {
+							powerRollText = powerRollText + '\n   Bonus Melee Damage: ' + AddSign(dmgMelee.tier1) + ' / ' + AddSign(dmgMelee.tier2) + ' / ' + AddSign(dmgMelee.tier3);
+							powerRollText = powerRollText + '\n   Bonus Ranged Damage: ' + AddSign(dmgRanged.tier1) + ' / ' + AddSign(dmgRanged.tier2) + ' / ' + AddSign(dmgRanged.tier3);
+						}
+
 						details.push(powerRollText);
 					}
 					if (a.type.trigger !== '') {
 						details.push('Trigger:\n' + CleanupOutput(a.type.trigger));
 					}
-					if(a.effect && details.length === 0)
+					if (a.effect && details.length === 0)
 						details.push(CleanupOutput(a.effect.replace(/^\s+/, '')));
-					else if(a.effect) {
+					else if (a.effect) {
 						details.push('Effect:\n' + CleanupOutput(a.effect.replace(/^\s+/, '')));
 					}
-					if(a.alternateEffects.length > 0) {
+					if (a.alternateEffects.length > 0) {
 						details.push(
 							...a.alternateEffects.map(e => 'Alternate Effect:\n' + CleanupOutput(e))
 						);
@@ -370,28 +377,32 @@ export class PDFExport {
 					}
 					texts[prefix + 'Text' + i] = details.join('\n\n');
 
-					if (typeof a.cost == 'number' && a.cost > 0) {
+					if (typeof a.cost === 'number' && a.cost > 0) {
 						texts[prefix + 'Tag' + i] = a.cost;
-					} else if(a.cost == 'signature') {
+					} else if (a.cost === 'signature') {
 						texts[prefix + 'Tag' + i] = 'S';
-					} else if(a.type.usage == AbilityUsage.Trigger) {
-						texts[prefix + 'Tag' + i] = 'T';
-					} else if(a.type.usage == AbilityUsage.Maneuver) {
-						texts[prefix + 'Tag' + i] = 'M';
-					} else if(a.type.usage == AbilityUsage.Action) {
-						texts[prefix + 'Tag' + i] = 'A';
+					} else if (a.type.usage === AbilityUsage.Trigger) {
+						texts[prefix + 'Tag' + i] = a.type.free ? 'FT' : 'T';
+					} else if (a.type.usage === AbilityUsage.Maneuver) {
+						texts[prefix + 'Tag' + i] = a.type.free ? 'FM' : 'M';
+					} else if (a.type.usage === AbilityUsage.Action) {
+						texts[prefix + 'Tag' + i] = a.type.free ? 'FA' : 'A';
+					} else if (a.type.usage === AbilityUsage.FreeStrike) {
+						texts[prefix + 'Tag' + i] = 'FS';
 					}
 				});
 			};
-			const abilities = HeroLogic.getAbilities(hero, true, true, false);
-			texts['RegularActions'] = abilities.filter(a => a.type.usage == AbilityUsage.Action && a.id !== 'free-melee' && a.id !== 'free-ranged').map(a => ' • ' + a.name + (typeof(a.cost) == 'number' && a.cost > 0 && ' (' + a.cost + ')' || '')).join('\n');
-			texts['Maneuvers'] = abilities.filter(a => a.type.usage == AbilityUsage.Maneuver).map(a => ' • ' + a.name + (typeof(a.cost) == 'number' && a.cost > 0 && ' (' + a.cost + ')' || '')).join('\n');
-			texts['TriggeredActions'] = abilities.filter(a => a.type.usage == AbilityUsage.Trigger).map(a => ' • ' + a.name + (typeof(a.cost) == 'number' && a.cost > 0 && ' (' + a.cost + ')' || '')).join('\n');
+			const abilities = HeroLogic.getAbilities(hero, false).map(a => a.ability);
+			abilities.push(AbilityData.freeStrikeMelee);
+			abilities.push(AbilityData.freeStrikeRanged);
+			texts['RegularActions'] = abilities.filter(a => a.type.usage === AbilityUsage.Action).map(a => ' • ' + a.name + (typeof (a.cost) === 'number' && a.cost > 0 && ' (' + a.cost + ')' || '')).join('\n');
+			texts['Maneuvers'] = abilities.filter(a => a.type.usage === AbilityUsage.Maneuver).map(a => ' • ' + a.name + (typeof (a.cost) === 'number' && a.cost > 0 && ' (' + a.cost + ')' || '')).join('\n');
+			texts['TriggeredActions'] = abilities.filter(a => a.type.usage === AbilityUsage.Trigger).map(a => ' • ' + a.name + (typeof (a.cost) === 'number' && a.cost > 0 && ' (' + a.cost + ')' || '')).join('\n');
 
 			ApplyGroup(
 				abilities.filter(a => !ignoredFeatures[a.id]),
 				'Ability',
-				18
+				(format === 'portrait') ? 18 : 16
 			);
 		}
 
@@ -412,7 +423,7 @@ export class PDFExport {
 		const DoesTextFitFieldRectangle = (t: string, rect: { x: number; y: number; width: number; height: number }, size: number, multiline: boolean) => {
 			t = t.replace(/\t/g, '    ');
 			t = sanitize(t);
-			if(multiline) {
+			if (multiline) {
 				// offset of 20 for multiline and 5 for single found by testing different values
 				const widthOffset = 20;
 				const heightOffset = 20;
@@ -424,7 +435,7 @@ export class PDFExport {
 				// lineHeight multiplier found by testing different values
 				const lineHeight = font.heightAtSize(size) * 1.2;
 				lines.forEach(l => {
-					area = area - Math.max(1, Math.ceil(font.widthOfTextAtSize(l, size)/width)) * lineHeight * width;
+					area = area - Math.max(1, Math.ceil(font.widthOfTextAtSize(l, size) / width)) * lineHeight * width;
 				});
 				return area > 0;
 			} else {
@@ -440,9 +451,9 @@ export class PDFExport {
 				const t = texts[field.getName()];
 				// Get the text to fit inside the field, done manually because some of
 				// the characters used mess up the auto-sizing done by the pdf library
-				if(widget && t && !DoesTextFitFieldRectangle(t.toString(), widget.getRectangle(), fontSize, field.isMultiline())) {
+				if (widget && t && !DoesTextFitFieldRectangle(t.toString(), widget.getRectangle(), fontSize, field.isMultiline())) {
 					let altFontSize = fontSize - 0.5;
-					while(altFontSize > 1 && !DoesTextFitFieldRectangle(t.toString(), widget.getRectangle(), altFontSize, field.isMultiline())) {
+					while (altFontSize > 1 && !DoesTextFitFieldRectangle(t.toString(), widget.getRectangle(), altFontSize, field.isMultiline())) {
 						altFontSize = altFontSize - 0.5;
 					}
 					field.setFontSize(altFontSize);

@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '../../../controls/error-boundary/error-boundary';
 import { Plot } from '../../../../models/plot';
 import { ReactNode } from 'react';
 
@@ -45,7 +46,7 @@ export const PlotPanel = (props: Props) => {
 	try {
 		if (props.plot.plots.length === 0) {
 			return (
-				<div className='ds-text dimmed-text centered-text'>Empty</div>
+				<div className='ds-text dimmed-text centered-text' style={{ flex: '1 1 0' }}>Empty</div>
 			);
 		};
 
@@ -141,13 +142,15 @@ export const PlotPanel = (props: Props) => {
 		});
 
 		return (
-			<div className='plot-panel' onClick={() => selectPlotPoint(null)}>
-				<svg className='plot-container' style={{ height: totalHeight }}>
-					{links}
-					{linkLabels}
-					{plots}
-				</svg>
-			</div>
+			<ErrorBoundary>
+				<div className='plot-panel' onClick={() => selectPlotPoint(null)}>
+					<svg className='plot-container' style={{ height: totalHeight }}>
+						{links}
+						{linkLabels}
+						{plots}
+					</svg>
+				</div>
+			</ErrorBoundary>
 		);
 	} catch (ex) {
 		console.error(ex);

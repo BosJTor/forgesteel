@@ -1,15 +1,16 @@
-import { Alert, Button, Drawer, Input, Popover, Segmented, Select, Space, Tabs } from 'antd';
-import { CaretDownOutlined, CaretUpOutlined, CloseOutlined, EditOutlined, LeftOutlined, SaveOutlined, SettingOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Alert, Button, Drawer, Flex, Input, Popover, Segmented, Select, Space, Tabs, Upload } from 'antd';
+import { CaretDownOutlined, CaretUpOutlined, CloseOutlined, CopyOutlined, DownOutlined, DownloadOutlined, EditOutlined, LeftOutlined, PlusOutlined, SaveOutlined, SettingOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { EnvironmentData, OrganizationData, UpbringingData } from '../../../../data/culture-data';
 import { Feature, FeatureAbility, FeatureAddOn, FeatureAddOnType, FeatureMalice, FeatureText } from '../../../../models/feature';
 import { Monster, MonsterGroup } from '../../../../models/monster';
 import { Sourcebook, SourcebookElementKind } from '../../../../models/sourcebook';
 import { Ability } from '../../../../models/ability';
-import { AbilityEditPanel } from '../../../panels/edit/ability-edit-panel/ability-edit-panel';
+import { AbilityEditPanel } from '../../../panels/edit/ability-edit/ability-edit-panel';
 import { AbilityKeyword } from '../../../../enums/ability-keyword';
 import { AbilityLogic } from '../../../../logic/ability-logic';
 import { Ancestry } from '../../../../models/ancestry';
 import { AncestryPanel } from '../../../panels/elements/ancestry-panel/ancestry-panel';
+import { AppFooter } from '../../../panels/app-footer/app-footer';
 import { AppHeader } from '../../../panels/app-header/app-header';
 import { Career } from '../../../../models/career';
 import { CareerPanel } from '../../../panels/elements/career-panel/career-panel';
@@ -21,20 +22,24 @@ import { ComplicationPanel } from '../../../panels/elements/complication-panel/c
 import { Culture } from '../../../../models/culture';
 import { CulturePanel } from '../../../panels/elements/culture-panel/culture-panel';
 import { DamageModifierType } from '../../../../enums/damage-modifier-type';
+import { DamageType } from '../../../../enums/damage-type';
 import { DangerButton } from '../../../controls/danger-button/danger-button';
 import { Domain } from '../../../../models/domain';
 import { DomainPanel } from '../../../panels/elements/domain-panel/domain-panel';
 import { Element } from '../../../../models/element';
-import { ElementEditPanel } from '../../../panels/edit/element-edit-panel/element-edit-panel';
+import { ElementEditPanel } from '../../../panels/edit/element-edit/element-edit-panel';
+import { Empty } from '../../../controls/empty/empty';
+import { ErrorBoundary } from '../../../controls/error-boundary/error-boundary';
 import { Expander } from '../../../controls/expander/expander';
 import { FactoryLogic } from '../../../../logic/factory-logic';
-import { FeatureEditPanel } from '../../../panels/edit/feature-edit-panel/feature-edit-panel';
+import { FeatureEditPanel } from '../../../panels/edit/feature-edit/feature-edit-panel';
 import { FeatureLogic } from '../../../../logic/feature-logic';
 import { FeatureType } from '../../../../enums/feature-type';
 import { Field } from '../../../controls/field/field';
 import { Format } from '../../../../utils/format';
 import { FormatLogic } from '../../../../logic/format-logic';
 import { HeaderText } from '../../../controls/header-text/header-text';
+import { Hero } from '../../../../models/hero';
 import { HeroClass } from '../../../../models/class';
 import { Item } from '../../../../models/item';
 import { ItemPanel } from '../../../panels/elements/item-panel/item-panel';
@@ -42,15 +47,14 @@ import { ItemType } from '../../../../enums/item-type';
 import { Kit } from '../../../../models/kit';
 import { KitArmor } from '../../../../enums/kit-armor';
 import { KitPanel } from '../../../panels/elements/kit-panel/kit-panel';
-import { KitType } from '../../../../enums/kit-type';
 import { KitWeapon } from '../../../../enums/kit-weapon';
-import { MonsterEditPanel } from '../../../panels/edit/monster-edit-panel/monster-edit-panel';
+import { MonsterEditPanel } from '../../../panels/edit/monster-edit/monster-edit-panel';
 import { MonsterGroupPanel } from '../../../panels/elements/monster-group-panel/monster-group-panel';
 import { MonsterLogic } from '../../../../logic/monster-logic';
 import { MonsterOrganizationType } from '../../../../enums/monster-organization-type';
 import { MonsterPanel } from '../../../panels/elements/monster-panel/monster-panel';
 import { MonsterRoleType } from '../../../../enums/monster-role-type';
-import { MonsterSelectModal } from '../../../modals/monster-select/monster-select-modal';
+import { MonsterSelectModal } from '../../../modals/select/monster-select/monster-select-modal';
 import { MultiLine } from '../../../controls/multi-line/multi-line';
 import { NameGenerator } from '../../../../utils/name-generator';
 import { NumberSpin } from '../../../controls/number-spin/number-spin';
@@ -80,10 +84,12 @@ import './library-edit-page.scss';
 
 interface Props {
 	sourcebooks: Sourcebook[];
+	heroes: Hero[];
 	options: Options;
 	showDirectory: () => void;
 	showAbout: () => void;
 	showRoll: () => void;
+	showReference: () => void;
  	showMonster: (monster: Monster, monsterGroup: MonsterGroup) => void;
 	saveChanges: (kind: SourcebookElementKind, sourcebookID: string, element: Element) => void;
 	setOptions: (options: Options) => void;
@@ -162,7 +168,7 @@ export const LibraryEditPage = (props: Props) => {
 			<Space direction='vertical' style={{ width: '100%' }}>
 				<HeaderText>Name</HeaderText>
 				<Input
-					className={element.name === '' ? 'input-empty' : ''}
+					status={element.name === '' ? 'warning' : ''}
 					placeholder='Name'
 					allowClear={true}
 					addonAfter={<ThunderboltOutlined className='random-btn' onClick={() => setName(NameGenerator.generateName())} />}
@@ -225,7 +231,7 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveFeature(f, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveFeature(f, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteFeature(f); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteFeature(f); }} />
 							]}
 						>
 							<FeatureEditPanel
@@ -238,14 +244,13 @@ export const LibraryEditPage = (props: Props) => {
 				}
 				{
 					el.features.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No features'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addFeature}>Add a new feature</Button>
+				<Button block={true} onClick={addFeature}>
+					<PlusOutlined />
+					Add a new feature
+				</Button>
 			</Space>
 		);
 	};
@@ -299,7 +304,7 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveIncident(o, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveIncident(o, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteIncident(o); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteIncident(o); }} />
 							]}
 						>
 							<ElementEditPanel
@@ -311,14 +316,13 @@ export const LibraryEditPage = (props: Props) => {
 				}
 				{
 					career.incitingIncidents.options.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No inciting incidents'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addIncident}>Add a new inciting incident</Button>
+				<Button block={true} onClick={addIncident}>
+					<PlusOutlined />
+					Add a new inciting incident
+				</Button>
 			</Space>
 		);
 	};
@@ -330,11 +334,21 @@ export const LibraryEditPage = (props: Props) => {
 			<Space direction='vertical' style={{ width: '100%' }}>
 				<Select
 					style={{ width: '100%' }}
-					className={culture.languages.length === 0 ? 'selection-empty' : ''}
+					status={culture.languages.length === 0 ? 'warning' : ''}
 					allowClear={true}
 					placeholder='Select language'
 					options={SourcebookLogic.getLanguages(props.sourcebooks).map(l => ({ label: l.name, value: l.name, desc: l.description }))}
 					optionRender={option => <Field label={option.data.label} value={option.data.desc} />}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.label,
+								option.desc
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={culture.languages.length > 0 ? culture.languages[0] : null}
 					onChange={value => {
 						const copy = Utils.copy(element) as Culture;
@@ -345,11 +359,20 @@ export const LibraryEditPage = (props: Props) => {
 				/>
 				<Select
 					style={{ width: '100%' }}
-					className={culture.environment === null ? 'selection-empty' : ''}
+					status={culture.environment === null ? 'warning' : ''}
 					allowClear={true}
 					placeholder='Select environment'
 					options={EnvironmentData.getEnvironments().map(s => ({ value: s.id, label: s.name }))}
 					optionRender={option => <div className='ds-text'>{option.data.label}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.label
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={culture.environment ? culture.environment.id : null}
 					onChange={value => {
 						const copy = Utils.copy(element) as Culture;
@@ -364,11 +387,20 @@ export const LibraryEditPage = (props: Props) => {
 				/>
 				<Select
 					style={{ width: '100%' }}
-					className={culture.organization === null ? 'selection-empty' : ''}
+					status={culture.organization === null ? 'warning' : ''}
 					allowClear={true}
 					placeholder='Select organization'
 					options={OrganizationData.getOrganizations().map(s => ({ value: s.id, label: s.name }))}
 					optionRender={option => <div className='ds-text'>{option.data.label}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.label
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={culture.organization ? culture.organization.id : null}
 					onChange={value => {
 						const copy = Utils.copy(element) as Culture;
@@ -383,11 +415,20 @@ export const LibraryEditPage = (props: Props) => {
 				/>
 				<Select
 					style={{ width: '100%' }}
-					className={culture.upbringing === null ? 'selection-empty' : ''}
+					status={culture.upbringing === null ? 'warning' : ''}
 					allowClear={true}
 					placeholder='Select upbringing'
 					options={UpbringingData.getUpbringings().map(s => ({ value: s.id, label: s.name }))}
 					optionRender={option => <div className='ds-text'>{option.data.label}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.label
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={culture.upbringing ? culture.upbringing.id : null}
 					onChange={value => {
 						const copy = Utils.copy(element) as Culture;
@@ -428,10 +469,35 @@ export const LibraryEditPage = (props: Props) => {
 			setDirty(true);
 		};
 
-		const setPrimaryCharacteristics = (value: Characteristic[]) => {
-			const elementCopy = Utils.copy(element) as HeroClass;
-			elementCopy.primaryCharacteristics = value;
-			setElement(elementCopy);
+		const addCharacteristicSet = () => {
+			const classCopy = Utils.copy(element) as HeroClass;
+			classCopy.primaryCharacteristicsOptions.push([]);
+			setElement(classCopy);
+			setDirty(true);
+		};
+
+		const toggleCharacteristic = (index: number, characteristic: Characteristic) => {
+			const classCopy = Utils.copy(element) as HeroClass;
+			if (classCopy.primaryCharacteristicsOptions[index].includes(characteristic)) {
+				classCopy.primaryCharacteristicsOptions[index] = classCopy.primaryCharacteristicsOptions[index].filter(ch => ch !== characteristic);
+			} else {
+				classCopy.primaryCharacteristicsOptions[index].push(characteristic);
+			}
+			setElement(classCopy);
+			setDirty(true);
+		};
+
+		const moveCharacteristicSet = (index: number, direction: 'up' | 'down') => {
+			const classCopy = Utils.copy(element) as HeroClass;
+			classCopy.primaryCharacteristicsOptions = Collections.move(classCopy.primaryCharacteristicsOptions, index, direction);
+			setElement(classCopy);
+			setDirty(true);
+		};
+
+		const deleteCharacteristicSet = (index: number) => {
+			const classCopy = Utils.copy(element) as HeroClass;
+			classCopy.primaryCharacteristicsOptions.splice(index, 1);
+			setElement(classCopy);
 			setDirty(true);
 		};
 
@@ -439,7 +505,7 @@ export const LibraryEditPage = (props: Props) => {
 			<Space direction='vertical' style={{ width: '100%' }}>
 				<HeaderText>Heroic Resource</HeaderText>
 				<Input
-					className={heroClass.heroicResource === '' ? 'input-empty' : ''}
+					status={heroClass.heroicResource === '' ? 'warning' : ''}
 					placeholder='Heroic resource'
 					allowClear={true}
 					value={heroClass.heroicResource}
@@ -447,7 +513,7 @@ export const LibraryEditPage = (props: Props) => {
 				/>
 				<HeaderText>Subclass Name</HeaderText>
 				<Input
-					className={heroClass.subclassName === '' ? 'input-empty' : ''}
+					status={heroClass.subclassName === '' ? 'warning' : ''}
 					placeholder='Subclass name'
 					allowClear={true}
 					value={heroClass.subclassName}
@@ -460,17 +526,49 @@ export const LibraryEditPage = (props: Props) => {
 					onChange={setSubclassCount}
 				/>
 				<HeaderText>Primary Characteristics</HeaderText>
-				<Select
-					style={{ width: '100%' }}
-					className={heroClass.primaryCharacteristics.length < 2 ? 'selection-empty' : ''}
-					mode='multiple'
-					maxCount={2}
-					placeholder='Select primary characteristics'
-					options={[ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ].map(ch => ({ value: ch }))}
-					optionRender={option => <div className='ds-text'>{option.data.value}</div>}
-					value={heroClass.primaryCharacteristics}
-					onChange={setPrimaryCharacteristics}
-				/>
+				{
+					heroClass.primaryCharacteristicsOptions.map((o, n) => (
+						<Expander
+							key={n}
+							title={o.join(', ') || 'No Characteristics'}
+							extra={[
+								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveCharacteristicSet(n, 'up'); }} />,
+								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveCharacteristicSet(n, 'down'); }} />,
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteCharacteristicSet(n); }} />
+							]}
+						>
+							<Space direction='vertical' style={{ width: '100%' }}>
+								<Toggle label={Characteristic.Might} value={o.includes(Characteristic.Might)} onChange={() => toggleCharacteristic(n, Characteristic.Might)} />
+								<Toggle label={Characteristic.Agility} value={o.includes(Characteristic.Agility)} onChange={() => toggleCharacteristic(n, Characteristic.Agility)} />
+								<Toggle label={Characteristic.Reason} value={o.includes(Characteristic.Reason)} onChange={() => toggleCharacteristic(n, Characteristic.Reason)} />
+								<Toggle label={Characteristic.Intuition} value={o.includes(Characteristic.Intuition)} onChange={() => toggleCharacteristic(n, Characteristic.Intuition)} />
+								<Toggle label={Characteristic.Presence} value={o.includes(Characteristic.Presence)} onChange={() => toggleCharacteristic(n, Characteristic.Presence)} />
+								{
+									(o.length === 0) || (o.length >= 3) ?
+										<Alert
+											type='warning'
+											showIcon={true}
+											message='One or two characteristics must be selected.'
+										/>
+										: null
+								}
+							</Space>
+						</Expander>
+					))
+				}
+				{
+					heroClass.primaryCharacteristicsOptions.length === 0 ?
+						<Alert
+							type='warning'
+							showIcon={true}
+							message='A class must have one or two primary characteristics.'
+						/>
+						: null
+				}
+				<Button block={true} onClick={addCharacteristicSet}>
+					<PlusOutlined />
+					Add a new primary characteristic option
+				</Button>
 			</Space>
 		);
 	};
@@ -546,7 +644,7 @@ export const LibraryEditPage = (props: Props) => {
 											extra={[
 												<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveFeature(lvl.level, f, 'up'); }} />,
 												<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveFeature(lvl.level, f, 'down'); }} />,
-												<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteFeature(lvl.level, f); }} />
+												<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteFeature(lvl.level, f); }} />
 											]}
 										>
 											<FeatureEditPanel
@@ -559,14 +657,13 @@ export const LibraryEditPage = (props: Props) => {
 								}
 								{
 									lvl.features.length === 0 ?
-										<Alert
-											type='warning'
-											showIcon={true}
-											message='No features'
-										/>
+										<Empty />
 										: null
 								}
-								<Button block={true} onClick={() => addFeature(lvl.level)}>Add a new level {lvl.level} feature</Button>
+								<Button block={true} onClick={() => addFeature(lvl.level)}>
+									<PlusOutlined />
+									Add a new level {lvl.level} feature
+								</Button>
 							</Space>
 						</div>
 					))
@@ -629,7 +726,7 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveAbility(a, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveAbility(a, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteAbility(a); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteAbility(a); }} />
 							]}
 						>
 							<AbilityEditPanel
@@ -641,14 +738,13 @@ export const LibraryEditPage = (props: Props) => {
 				}
 				{
 					heroClass.abilities.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No abilities'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addAbility}>Add a new ability</Button>
+				<Button block={true} onClick={addAbility}>
+					<PlusOutlined />
+					Add a new ability
+				</Button>
 			</Space>
 		);
 	};
@@ -689,23 +785,22 @@ export const LibraryEditPage = (props: Props) => {
 								<Button key='edit' type='text' title='Edit' icon={<EditOutlined />} onClick={e => { e.stopPropagation(); navigation.goToLibraryEdit(kind!, sourcebookID!, elementID!, sc.id); }} />,
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveSubclass(sc, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveSubclass(sc, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteSubclass(sc); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteSubclass(sc); }} />
 							]}
 						>
-							<SubclassPanel subclass={sc} />
+							<SubclassPanel subclass={sc} options={props.options} />
 						</Expander>
 					))
 				}
 				{
 					heroClass.subclasses.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No subclasses'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addSubclass}>Add a new subclass</Button>
+				<Button block={true} onClick={addSubclass}>
+					<PlusOutlined />
+					Add a new subclass
+				</Button>
 			</Space>
 		);
 	};
@@ -817,7 +912,7 @@ export const LibraryEditPage = (props: Props) => {
 								extra={[
 									<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveFeature(subclass, lvl.level, f, 'up'); }} />,
 									<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveFeature(subclass, lvl.level, f, 'down'); }} />,
-									<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteFeature(subclass, lvl.level, f); }} />
+									<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteFeature(subclass, lvl.level, f); }} />
 								]}
 							>
 								<FeatureEditPanel
@@ -830,14 +925,13 @@ export const LibraryEditPage = (props: Props) => {
 					}
 					{
 						lvl.features.length === 0 ?
-							<Alert
-								type='warning'
-								showIcon={true}
-								message='No features'
-							/>
+							<Empty />
 							: null
 					}
-					<Button block={true} onClick={() => addFeature(subclass, lvl.level)}>Add a new level {lvl.level} feature</Button>
+					<Button block={true} onClick={() => addFeature(subclass, lvl.level)}>
+						<PlusOutlined />
+						Add a new level {lvl.level} feature
+					</Button>
 				</Space>
 			));
 		};
@@ -852,7 +946,7 @@ export const LibraryEditPage = (props: Props) => {
 							<div>
 								<HeaderText>Name</HeaderText>
 								<Input
-									className={subclass.name === '' ? 'input-empty' : ''}
+									status={subclass.name === '' ? 'warning' : ''}
 									placeholder='Name'
 									allowClear={true}
 									value={subclass.name}
@@ -894,7 +988,7 @@ export const LibraryEditPage = (props: Props) => {
 	const getKitDetailsSection = () => {
 		const kit = element as Kit;
 
-		const setType = (value: KitType) => {
+		const setType = (value: string) => {
 			const elementCopy = Utils.copy(element) as Kit;
 			elementCopy.type = value;
 			setElement(elementCopy);
@@ -918,35 +1012,51 @@ export const LibraryEditPage = (props: Props) => {
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
 				<HeaderText>Type</HeaderText>
-				<Select
-					style={{ width: '100%' }}
-					placeholder='Select type'
-					options={[ KitType.Standard, KitType.Stormwight ].map(l => ({ value: l }))}
-					optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+				<Input
+					placeholder='Type'
+					allowClear={true}
 					value={kit.type}
-					onChange={setType}
+					onChange={e => setType(e.target.value)}
 				/>
 				<HeaderText>Armor</HeaderText>
 				<Select
 					style={{ width: '100%' }}
-					className={kit.armor.length === 0 ? 'selection-empty' : ''}
+					status={kit.armor.length === 0 ? 'warning' : ''}
 					mode='multiple'
 					allowClear={true}
 					placeholder='Select armor'
 					options={[ KitArmor.Light, KitArmor.Medium, KitArmor.Heavy, KitArmor.Shield ].map(option => ({ value: option }))}
 					optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.value
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={kit.armor}
 					onChange={setArmor}
 				/>
 				<HeaderText>Weapons</HeaderText>
 				<Select
 					style={{ width: '100%' }}
-					className={kit.weapon.length === 0 ? 'selection-empty' : ''}
+					status={kit.weapon.length === 0 ? 'warning' : ''}
 					mode='multiple'
 					allowClear={true}
 					placeholder='Select weapon'
 					options={[ KitWeapon.Bow, KitWeapon.Ensnaring, KitWeapon.Heavy, KitWeapon.Light, KitWeapon.Medium, KitWeapon.Polearm, KitWeapon.Unarmed, KitWeapon.Whip ].map(option => ({ value: option }))}
 					optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.value
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={kit.weapon}
 					onChange={setWeapon}
 				/>
@@ -1188,10 +1298,20 @@ export const LibraryEditPage = (props: Props) => {
 		return (
 			<Space direction='vertical' style={{ width: '100%' }}>
 				<HeaderText>Item Type</HeaderText>
-				<Segmented
-					name='itemtypes'
-					block={true}
-					options={[ ItemType.Consumable, ItemType.Trinket, ItemType.Leveled, ItemType.Artifact ]}
+				<Select
+					style={{ width: '100%' }}
+					placeholder='Type'
+					options={[ ItemType.Artifact, ItemType.Consumable, ItemType.LeveledArmor, ItemType.LeveledImplement, ItemType.LeveledWeapon, ItemType.Leveled, ItemType.Trinket ].map(option => ({ value: option }))}
+					optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.value
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={item.type}
 					onChange={setType}
 				/>
@@ -1203,6 +1323,15 @@ export const LibraryEditPage = (props: Props) => {
 					allowClear={true}
 					options={AbilityLogic.getKeywords().map(option => ({ value: option }))}
 					optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.value
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={item.keywords}
 					onChange={setKeywords}
 				/>
@@ -1286,7 +1415,7 @@ export const LibraryEditPage = (props: Props) => {
 											extra={[
 												<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveFeature(lvl.level, f.feature, 'up'); }} />,
 												<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveFeature(lvl.level, f.feature, 'down'); }} />,
-												<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteFeature(lvl.level, f.feature); }} />
+												<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteFeature(lvl.level, f.feature); }} />
 											]}
 										>
 											<FeatureEditPanel
@@ -1299,14 +1428,13 @@ export const LibraryEditPage = (props: Props) => {
 								}
 								{
 									lvl.features.length === 0 ?
-										<Alert
-											type='warning'
-											showIcon={true}
-											message='No features'
-										/>
+										<Empty />
 										: null
 								}
-								<Button block={true} onClick={() => addFeature(lvl.level)}>Add a new level {lvl.level} feature</Button>
+								<Button block={true} onClick={() => addFeature(lvl.level)}>
+									<PlusOutlined />
+									Add a new level {lvl.level} feature
+								</Button>
 							</Space>
 						</div>
 					))
@@ -1397,6 +1525,15 @@ export const LibraryEditPage = (props: Props) => {
 								mode='multiple'
 								options={[ Characteristic.Might, Characteristic.Agility, Characteristic.Reason, Characteristic.Intuition, Characteristic.Presence ].map(option => ({ value: option }))}
 								optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+								showSearch={true}
+								filterOption={(input, option) => {
+									const strings = option ?
+										[
+											option.value
+										]
+										: [];
+									return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+								}}
 								value={item.crafting.characteristic}
 								onChange={setCharacteristic}
 							/>
@@ -1484,6 +1621,15 @@ export const LibraryEditPage = (props: Props) => {
 					style={{ width: '100%' }}
 					options={[ TerrainCategory.ArcaneObject, TerrainCategory.Environmental, TerrainCategory.Fieldwork, TerrainCategory.Mechanism, TerrainCategory.PowerFixture, TerrainCategory.SiegeEngine ].map(c => ({ label: c, value: c }))}
 					optionRender={option => <div className='ds-text'>{option.data.label}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.label
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={terrain.category}
 					onChange={setCategory}
 				/>
@@ -1499,6 +1645,16 @@ export const LibraryEditPage = (props: Props) => {
 					style={{ width: '100%' }}
 					options={[ MonsterRoleType.NoRole, MonsterRoleType.Ambusher, MonsterRoleType.Artillery, MonsterRoleType.Brute, MonsterRoleType.Controller, MonsterRoleType.Defender, MonsterRoleType.Harrier, MonsterRoleType.Hexer, MonsterRoleType.Mount, MonsterRoleType.Support ].map(type => ({ label: type, value: type, desc: MonsterLogic.getRoleTypeDescription(type) }))}
 					optionRender={option => <Field label={option.data.label} value={option.data.desc} />}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.label,
+								option.desc
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={terrain.role.type}
 					onChange={setRoleType}
 				/>
@@ -1506,6 +1662,15 @@ export const LibraryEditPage = (props: Props) => {
 					style={{ width: '100%' }}
 					options={[ TerrainRoleType.Fortification, TerrainRoleType.Hazard, TerrainRoleType.Relic, TerrainRoleType.SiegeEngine, TerrainRoleType.Trap, TerrainRoleType.Trigger ].map(type => ({ label: type, value: type }))}
 					optionRender={option => <div className='ds-text'>{option.data.label}</div>}
+					showSearch={true}
+					filterOption={(input, option) => {
+						const strings = option ?
+							[
+								option.label
+							]
+							: [];
+						return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+					}}
 					value={terrain.role.terrainType}
 					onChange={setTerrainRoleType}
 				/>
@@ -1537,7 +1702,7 @@ export const LibraryEditPage = (props: Props) => {
 		const addDamageMod = () => {
 			const copy = Utils.copy(element) as Terrain;
 			copy.damageMods.push(FactoryLogic.damageModifier.create({
-				damageType: '',
+				damageType: DamageType.Damage,
 				modifierType: DamageModifierType.Immunity,
 				value: 0
 			}));
@@ -1552,7 +1717,7 @@ export const LibraryEditPage = (props: Props) => {
 			setDirty(true);
 		};
 
-		const setDamageType = (index: number, value: string) => {
+		const setDamageType = (index: number, value: DamageType) => {
 			const copy = Utils.copy(element) as Terrain;
 			copy.damageMods[index].damageType = value;
 			setElement(copy);
@@ -1590,7 +1755,7 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveDamageMod(n, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveDamageMod(n, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteDamageMod(n); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteDamageMod(n); }} />
 							]}
 						>
 							<HeaderText>Modifier Type</HeaderText>
@@ -1602,11 +1767,22 @@ export const LibraryEditPage = (props: Props) => {
 								onChange={value => setModifierType(n, value)}
 							/>
 							<HeaderText>Damage Type</HeaderText>
-							<Input
+							<Select
+								style={{ width: '100%' }}
 								placeholder='Damage type'
-								allowClear={true}
+								options={[ DamageType.Damage, DamageType.Acid, DamageType.Cold, DamageType.Corruption, DamageType.Fire, DamageType.Holy, DamageType.Lightning, DamageType.Poison, DamageType.Psychic, DamageType.Sonic ].map(option => ({ value: option }))}
+								optionRender={option => <div className='ds-text'>{option.data.value}</div>}
+								showSearch={true}
+								filterOption={(input, option) => {
+									const strings = option ?
+										[
+											option.value
+										]
+										: [];
+									return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+								}}
 								value={dm.damageType}
-								onChange={e => setDamageType(n, e.target.value)}
+								onChange={value => setDamageType(n, value)}
 							/>
 							<HeaderText>Value</HeaderText>
 							<NumberSpin min={0} value={dm.value} onChange={value => setValue(n, value)} />
@@ -1615,14 +1791,13 @@ export const LibraryEditPage = (props: Props) => {
 				}
 				{
 					terrain.damageMods.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No damage modifiers'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addDamageMod}>Add a new damage modifier</Button>
+				<Button block={true} onClick={addDamageMod}>
+					<PlusOutlined />
+					Add a new damage modifier
+				</Button>
 			</Space>
 		);
 	};
@@ -1655,7 +1830,7 @@ export const LibraryEditPage = (props: Props) => {
 
 		const deleteSection = (sectionIndex: number) => {
 			const copy = Utils.copy(terrain) as Terrain;
-			copy.sections.splice(sectionIndex);
+			copy.sections.splice(sectionIndex, 1);
 			setElement(copy);
 			setDirty(true);
 		};
@@ -1682,7 +1857,7 @@ export const LibraryEditPage = (props: Props) => {
 
 		const deleteSectionContent = (sectionIndex: number, contentIndex: number) => {
 			const copy = Utils.copy(terrain) as Terrain;
-			copy.sections[sectionIndex].content.splice(contentIndex);
+			copy.sections[sectionIndex].content.splice(contentIndex, 1);
 			setElement(copy);
 			setDirty(true);
 		};
@@ -1704,7 +1879,7 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveSection(sectionIndex, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveSection(sectionIndex, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteSection(sectionIndex); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteSection(sectionIndex); }} />
 							]}
 						>
 							<Space direction='vertical' style={{ width: '100%' }}>
@@ -1716,7 +1891,7 @@ export const LibraryEditPage = (props: Props) => {
 											extra={[
 												<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveSectionContent(sectionIndex, contentIndex, 'up'); }} />,
 												<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveSectionContent(sectionIndex, contentIndex, 'down'); }} />,
-												<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteSectionContent(sectionIndex, contentIndex); }} />
+												<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteSectionContent(sectionIndex, contentIndex); }} />
 											]}
 										>
 											<FeatureEditPanel
@@ -1730,28 +1905,26 @@ export const LibraryEditPage = (props: Props) => {
 								}
 								{
 									section.content.length === 0 ?
-										<Alert
-											type='warning'
-											showIcon={true}
-											message='No content'
-										/>
+										<Empty />
 										: null
 								}
-								<Button block={true} onClick={() => addSectionContent(sectionIndex)}>Add a new content item</Button>
+								<Button block={true} onClick={() => addSectionContent(sectionIndex)}>
+									<PlusOutlined />
+									Add a new content item
+								</Button>
 							</Space>
 						</Expander>
 					))
 				}
 				{
 					terrain.sections.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No sections'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addSection}>Add a new section</Button>
+				<Button block={true} onClick={addSection}>
+					<PlusOutlined />
+					Add a new section
+				</Button>
 			</Space>
 		);
 	};
@@ -1781,7 +1954,7 @@ export const LibraryEditPage = (props: Props) => {
 
 		const deleteUpgrade = (upgradeIndex: number) => {
 			const copy = Utils.copy(element) as Terrain;
-			copy.upgrades.splice(upgradeIndex);
+			copy.upgrades.splice(upgradeIndex, 1);
 			setElement(copy);
 			setDirty(true);
 		};
@@ -1832,7 +2005,7 @@ export const LibraryEditPage = (props: Props) => {
 
 		const deleteUpgradeSection = (upgradeIndex: number, sectionIndex: number) => {
 			const copy = Utils.copy(terrain) as Terrain;
-			copy.upgrades[upgradeIndex].sections.splice(sectionIndex);
+			copy.upgrades[upgradeIndex].sections.splice(sectionIndex, 1);
 			setElement(copy);
 			setDirty(true);
 		};
@@ -1859,7 +2032,7 @@ export const LibraryEditPage = (props: Props) => {
 
 		const deleteUpgradeSectionContent = (upgradeIndex: number, sectionIndex: number, contentIndex: number) => {
 			const copy = Utils.copy(terrain) as Terrain;
-			copy.upgrades[upgradeIndex].sections[sectionIndex].content.splice(contentIndex);
+			copy.upgrades[upgradeIndex].sections[sectionIndex].content.splice(contentIndex, 1);
 			setElement(copy);
 			setDirty(true);
 		};
@@ -1881,13 +2054,13 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveUpgrade(upgradeIndex, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveUpgrade(upgradeIndex, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteUpgrade(upgradeIndex); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteUpgrade(upgradeIndex); }} />
 							]}
 						>
 							<Space direction='vertical' style={{ width: '100%' }}>
 								<HeaderText>Label</HeaderText>
 								<Input
-									className={upgrade.label === '' ? 'input-empty' : ''}
+									status={upgrade.label === '' ? 'warning' : ''}
 									placeholder='Label'
 									allowClear={true}
 									value={upgrade.label}
@@ -1906,7 +2079,7 @@ export const LibraryEditPage = (props: Props) => {
 											extra={[
 												<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveUpgradeSection(upgradeIndex, sectionIndex, 'up'); }} />,
 												<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveUpgradeSection(upgradeIndex, sectionIndex, 'down'); }} />,
-												<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteUpgradeSection(upgradeIndex, sectionIndex); }} />
+												<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteUpgradeSection(upgradeIndex, sectionIndex); }} />
 											]}
 										>
 											<Space direction='vertical' style={{ width: '100%' }}>
@@ -1918,7 +2091,7 @@ export const LibraryEditPage = (props: Props) => {
 															extra={[
 																<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveUpgradeSectionContent(upgradeIndex, sectionIndex, contentIndex, 'up'); }} />,
 																<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveUpgradeSectionContent(upgradeIndex, sectionIndex, contentIndex, 'down'); }} />,
-																<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteUpgradeSectionContent(upgradeIndex, sectionIndex, contentIndex); }} />
+																<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteUpgradeSectionContent(upgradeIndex, sectionIndex, contentIndex); }} />
 															]}
 														>
 															<FeatureEditPanel
@@ -1932,42 +2105,39 @@ export const LibraryEditPage = (props: Props) => {
 												}
 												{
 													section.content.length === 0 ?
-														<Alert
-															type='warning'
-															showIcon={true}
-															message='No content'
-														/>
+														<Empty />
 														: null
 												}
-												<Button block={true} onClick={() => addUpgradeSectionContent(upgradeIndex, sectionIndex)}>Add a new content item</Button>
+												<Button block={true} onClick={() => addUpgradeSectionContent(upgradeIndex, sectionIndex)}>
+													<PlusOutlined />
+													Add a new content item
+												</Button>
 											</Space>
 										</Expander>
 									))
 								}
 								{
 									upgrade.sections.length === 0 ?
-										<Alert
-											type='warning'
-											showIcon={true}
-											message='No sections'
-										/>
+										<Empty />
 										: null
 								}
-								<Button block={true} onClick={() => addUpgradeSection(upgradeIndex)}>Add a new section</Button>
+								<Button block={true} onClick={() => addUpgradeSection(upgradeIndex)}>
+									<PlusOutlined />
+									Add a new section
+								</Button>
 							</Space>
 						</Expander>
 					))
 				}
 				{
 					terrain.upgrades.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No customizations'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addUpgrade}>Add a new customization</Button>
+				<Button block={true} onClick={addUpgrade}>
+					<PlusOutlined />
+					Add a new customization
+				</Button>
 			</Space>
 		);
 	};
@@ -2021,7 +2191,7 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveInformation(i, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveInformation(i, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteInformation(i); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteInformation(i); }} />
 							]}
 						>
 							<ElementEditPanel
@@ -2033,14 +2203,13 @@ export const LibraryEditPage = (props: Props) => {
 				}
 				{
 					monsterGroup.information.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No information pieces'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addInformation}>Add a new information piece</Button>
+				<Button block={true} onClick={addInformation}>
+					<PlusOutlined />
+					Add a new information piece
+				</Button>
 			</Space>
 		);
 	};
@@ -2097,7 +2266,7 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveMaliceFeature(f, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveMaliceFeature(f, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteMaliceFeature(f); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteMaliceFeature(f); }} />
 							]}
 						>
 							<FeatureEditPanel
@@ -2111,14 +2280,13 @@ export const LibraryEditPage = (props: Props) => {
 				}
 				{
 					monsterGroup.malice.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No malice features'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addMaliceFeature}>Add a new malice feature</Button>
+				<Button block={true} onClick={addMaliceFeature}>
+					<PlusOutlined />
+					Add a new malice feature
+				</Button>
 			</Space>
 		);
 	};
@@ -2143,6 +2311,16 @@ export const LibraryEditPage = (props: Props) => {
 				characteristics: MonsterLogic.createCharacteristics(0, 0, 0, 0, 0),
 				features: []
 			}));
+			setElement(copy);
+			setDirty(true);
+		};
+
+		const copyMonster = (monster: Monster) => {
+			const monsterCopy = Utils.copy(monster);
+			monsterCopy.id = Utils.guid();
+
+			const copy = Utils.copy(monsterGroup) as MonsterGroup;
+			copy.monsters.push(monsterCopy);
 			setElement(copy);
 			setDirty(true);
 		};
@@ -2176,26 +2354,64 @@ export const LibraryEditPage = (props: Props) => {
 								<Button key='edit' type='text' title='Edit' icon={<EditOutlined />} onClick={e => { e.stopPropagation(); navigation.goToLibraryEdit(kind!, sourcebookID!, elementID!, m.id); }} />,
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveMonster(m, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveMonster(m, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteMonster(m); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteMonster(m); }} />
 							]}
 						>
 							<MonsterPanel
 								monster={m}
 								monsterGroup={monsterGroup}
+								options={props.options}
 							/>
 						</Expander>
 					))
 				}
 				{
 					monsterGroup.monsters.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No monsters'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addMonster}>Add a new monster</Button>
+				<Flex gap={10}>
+					<Button block={true} onClick={addMonster}>
+						<PlusOutlined />
+						Add a new monster
+					</Button>
+					<Upload
+						style={{ width: '100%' }}
+						accept='.drawsteel-monster'
+						showUploadList={false}
+						beforeUpload={file => {
+							file
+								.text()
+								.then(json => {
+									const monster = (JSON.parse(json) as Monster);
+									copyMonster(monster);
+								});
+							return false;
+						}}
+					>
+						<Button block={true} onClick={() => null}>
+							<DownloadOutlined />
+							Import a monster
+						</Button>
+					</Upload>
+					<Button block={true} onClick={() => setDrawerOpen(true)}>
+						<CopyOutlined />
+						Copy an existing monster
+					</Button>
+				</Flex>
+				<Drawer open={drawerOpen} closeIcon={null} onClose={() => setDrawerOpen(false)} width='500px'>
+					<MonsterSelectModal
+						type='companion'
+						sourcebooks={props.sourcebooks}
+						options={props.options}
+						selectOriginal={false}
+						onSelect={monster => {
+							copyMonster(monster);
+							setDrawerOpen(false);
+						}}
+						onClose={() => setDrawerOpen(false)}
+					/>
+				</Drawer>
 			</Space>
 		);
 	};
@@ -2250,7 +2466,7 @@ export const LibraryEditPage = (props: Props) => {
 							extra={[
 								<Button key='up' type='text' title='Move Up' icon={<CaretUpOutlined />} onClick={e => { e.stopPropagation(); moveAddOn(i, 'up'); }} />,
 								<Button key='down' type='text' title='Move Down' icon={<CaretDownOutlined />} onClick={e => { e.stopPropagation(); moveAddOn(i, 'down'); }} />,
-								<DangerButton key='delete' mode='icon' onConfirm={e => { e.stopPropagation(); deleteAddOn(i); }} />
+								<DangerButton key='delete' mode='clear' onConfirm={e => { e.stopPropagation(); deleteAddOn(i); }} />
 							]}
 						>
 							<FeatureEditPanel
@@ -2264,14 +2480,13 @@ export const LibraryEditPage = (props: Props) => {
 				}
 				{
 					monsterGroup.addOns.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No customizations'
-						/>
+						<Empty />
 						: null
 				}
-				<Button block={true} onClick={addAddOn}>Add a new customization</Button>
+				<Button block={true} onClick={addAddOn}>
+					<PlusOutlined />
+					Add a new customization
+				</Button>
 			</Space>
 		);
 	};
@@ -2295,6 +2510,7 @@ export const LibraryEditPage = (props: Props) => {
 				monster={monster}
 				monsterGroup={monsterGroup}
 				sourcebooks={props.sourcebooks}
+				options={props.options}
 				similarMonsters={props.options.showSimilarMonsters ? getSimilarMonsters(monster) : []}
 				onChange={changeMonster}
 			/>
@@ -2359,6 +2575,7 @@ export const LibraryEditPage = (props: Props) => {
 								<MonsterPanel
 									monster={m}
 									monsterGroup={monsterGroup}
+									options={props.options}
 								/>
 							</SelectablePanel>
 						);
@@ -2366,17 +2583,14 @@ export const LibraryEditPage = (props: Props) => {
 				}
 				{
 					monsters.length === 0 ?
-						<Alert
-							type='warning'
-							showIcon={true}
-							message='No similar monsters.'
-						/>
+						<Empty text='No similar monsters.' />
 						: null
 				}
-				<Drawer open={drawerOpen} closeIcon={null} width='500px'>
+				<Drawer open={drawerOpen} closeIcon={null} onClose={() => setDrawerOpen(false)} width='500px'>
 					<MonsterSelectModal
 						type='companion'
 						sourcebooks={props.sourcebooks}
+						options={props.options}
 						selectOriginal={true}
 						onSelect={monster => {
 							const copy = Utils.copy(scratchpadMonsters) as Monster[];
@@ -2402,6 +2616,15 @@ export const LibraryEditPage = (props: Props) => {
 								style={{ width: '100%' }}
 								options={[ null, ...heroClass.subclasses ].map(sc => ({ label: sc ? sc.name || 'Unnamed Subclass' : 'Class', value: sc ? sc.id : '' }))}
 								optionRender={option => <div className='ds-text'>{option.data.label}</div>}
+								showSearch={true}
+								filterOption={(input, option) => {
+									const strings = option ?
+										[
+											option.label
+										]
+										: [];
+									return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+								}}
 								value={subElementID || ''}
 								onChange={id => navigation.goToLibraryEdit(kind!, sourcebookID!, elementID!, id)}
 							/>
@@ -2419,6 +2642,15 @@ export const LibraryEditPage = (props: Props) => {
 								style={{ width: '100%' }}
 								options={[ null, ...monsterGroup.monsters ].map(m => ({ label: m ? MonsterLogic.getMonsterName(m, monsterGroup) : 'Monster Group', value: m ? m.id : '' }))}
 								optionRender={option => <div className='ds-text'>{option.data.label}</div>}
+								showSearch={true}
+								filterOption={(input, option) => {
+									const strings = option ?
+										[
+											option.label
+										]
+										: [];
+									return strings.some(str => str.toLowerCase().includes(input.toLowerCase()));
+								}}
 								value={subElementID || ''}
 								onChange={id => navigation.goToLibraryEdit(kind!, sourcebookID!, elementID!, id)}
 							/>
@@ -2766,57 +2998,60 @@ export const LibraryEditPage = (props: Props) => {
 			case 'ancestry':
 				return (
 					<SelectablePanel>
-						<AncestryPanel ancestry={element as Ancestry} mode={PanelMode.Full} />
+						<AncestryPanel ancestry={element as Ancestry} options={props.options} mode={PanelMode.Full} />
 					</SelectablePanel>
 				);
 			case 'culture':
 				return (
 					<SelectablePanel>
-						<CulturePanel culture={element as Culture} mode={PanelMode.Full} />
+						<CulturePanel culture={element as Culture} options={props.options} mode={PanelMode.Full} />
 					</SelectablePanel>
 				);
 			case 'career':
 				return (
 					<SelectablePanel>
-						<CareerPanel career={element as Career} mode={PanelMode.Full} />
+						<CareerPanel career={element as Career} options={props.options} mode={PanelMode.Full} />
 					</SelectablePanel>
 				);
 			case 'class':
 				if (!subElementID) {
 					return (
 						<SelectablePanel>
-							<ClassPanel heroClass={element as HeroClass} mode={PanelMode.Full} />
+							<ClassPanel heroClass={element as HeroClass} options={props.options} mode={PanelMode.Full} />
 						</SelectablePanel>
 					);
 				} else {
+					const heroClass = element as HeroClass;
+					const subclass = heroClass.subclasses.find(sc => sc.id === subElementID) as SubClass;
+
 					return (
 						<SelectablePanel>
-							<SubclassPanel subclass={element as SubClass} mode={PanelMode.Full} />
+							<SubclassPanel subclass={subclass} options={props.options} mode={PanelMode.Full} />
 						</SelectablePanel>
 					);
 				}
 			case 'complication':
 				return (
 					<SelectablePanel>
-						<ComplicationPanel complication={element as Complication} mode={PanelMode.Full} />
+						<ComplicationPanel complication={element as Complication} options={props.options} mode={PanelMode.Full} />
 					</SelectablePanel>
 				);
 			case 'domain':
 				return (
 					<SelectablePanel>
-						<DomainPanel domain={element as Domain} mode={PanelMode.Full} />
+						<DomainPanel domain={element as Domain} options={props.options} mode={PanelMode.Full} />
 					</SelectablePanel>
 				);
 			case 'kit':
 				return (
 					<SelectablePanel>
-						<KitPanel kit={element as Kit} mode={PanelMode.Full} />
+						<KitPanel kit={element as Kit} options={props.options} mode={PanelMode.Full} />
 					</SelectablePanel>
 				);
 			case 'perk':
 				return (
 					<SelectablePanel>
-						<PerkPanel perk={element as Perk} mode={PanelMode.Full} />
+						<PerkPanel perk={element as Perk} options={props.options} mode={PanelMode.Full} />
 					</SelectablePanel>
 				);
 			case 'terrain':
@@ -2828,14 +3063,14 @@ export const LibraryEditPage = (props: Props) => {
 			case 'title':
 				return (
 					<SelectablePanel>
-						<TitlePanel title={element as Title} mode={PanelMode.Full} />
+						<TitlePanel title={element as Title} options={props.options} mode={PanelMode.Full} />
 					</SelectablePanel>
 				);
 			case 'item':
 				return (
 					<>
 						<SelectablePanel>
-							<ItemPanel item={element as Item} showCustomizations={true} mode={PanelMode.Full} />
+							<ItemPanel item={element as Item} options={props.options} showCustomizations={true} mode={PanelMode.Full} />
 						</SelectablePanel>
 						{
 							(element as Item).crafting ?
@@ -2850,7 +3085,7 @@ export const LibraryEditPage = (props: Props) => {
 				if (!subElementID) {
 					return (
 						<SelectablePanel>
-							<MonsterGroupPanel monsterGroup={element as MonsterGroup} mode={PanelMode.Full} />
+							<MonsterGroupPanel monsterGroup={element as MonsterGroup} options={props.options} mode={PanelMode.Full} />
 						</SelectablePanel>
 					);
 				} else {
@@ -2866,7 +3101,7 @@ export const LibraryEditPage = (props: Props) => {
 										label: 'Preview',
 										children: (
 											<SelectablePanel>
-												<MonsterPanel monster={monster} monsterGroup={monsterGroup} mode={PanelMode.Full} />
+												<MonsterPanel key={JSON.stringify(monster)} monster={monster} monsterGroup={monsterGroup} options={props.options} mode={PanelMode.Full} />
 											</SelectablePanel>
 										)
 									},
@@ -2881,7 +3116,7 @@ export const LibraryEditPage = (props: Props) => {
 					} else {
 						return (
 							<SelectablePanel>
-								<MonsterPanel monster={monster} monsterGroup={monsterGroup} mode={PanelMode.Full} />
+								<MonsterPanel key={JSON.stringify(monster)} monster={monster} monsterGroup={monsterGroup} options={props.options} mode={PanelMode.Full} />
 							</SelectablePanel>
 						);
 					}
@@ -2916,48 +3151,47 @@ export const LibraryEditPage = (props: Props) => {
 		}
 
 		return (
-			<div className='library-edit-page'>
-				<AppHeader subheader={getSubheader()} showDirectory={props.showDirectory} showAbout={props.showAbout} showRoll={props.showRoll}>
-					<Button type='primary' icon={<SaveOutlined />} disabled={!dirty} onClick={() => props.saveChanges(kind!, sourcebookID!, element)}>
-						Save Changes
-					</Button>
-					<Button icon={<CloseOutlined />} onClick={() => navigation.goToLibraryView(kind!, elementID!)}>
-						Cancel
-					</Button>
-					{
-						monster ?
-							<div className='divider' />
-							: null
-					}
-					{
-						monster ?
-							<Popover
-								trigger='click'
-								placement='bottom'
-								content={(
-									<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-										<OptionsPanel mode='monster' options={props.options} setOptions={props.setOptions} />
-									</div>
-								)}
-							>
-								<Button icon={<SettingOutlined />}>
-									Options
-								</Button>
-							</Popover>
-							: null
-					}
-				</AppHeader>
-				<div className='library-edit-page-content'>
-					<div className='edit-column'>
-						{getEditHeaderSection()}
-						{getEditSection()}
+			<ErrorBoundary>
+				<div className='library-edit-page'>
+					<AppHeader subheader={getSubheader()} showDirectory={props.showDirectory}>
+						<Button type='primary' icon={<SaveOutlined />} disabled={!dirty} onClick={() => props.saveChanges(kind!, sourcebookID!, element)}>
+							Save Changes
+						</Button>
+						<Button icon={<CloseOutlined />} onClick={() => navigation.goToLibraryView(kind!, elementID!)}>
+							Cancel
+						</Button>
+						{
+							monster ?
+								<div className='divider' />
+								: null
+						}
+						{
+							monster ?
+								<Popover
+									trigger='click'
+									content={<OptionsPanel mode='monster' options={props.options}heroes={props.heroes} setOptions={props.setOptions} />}
+								>
+									<Button icon={<SettingOutlined />}>
+										Options
+										<DownOutlined />
+									</Button>
+								</Popover>
+								: null
+						}
+					</AppHeader>
+					<div className='library-edit-page-content'>
+						<div className='edit-column'>
+							{getEditHeaderSection()}
+							{getEditSection()}
+						</div>
+						<div className='preview-column'>
+							{getPreviewHeaderSection()}
+							{getPreview()}
+						</div>
 					</div>
-					<div className='preview-column'>
-						{getPreviewHeaderSection()}
-						{getPreview()}
-					</div>
+					<AppFooter page='library' showAbout={props.showAbout} showRoll={props.showRoll} showReference={props.showReference} />
 				</div>
-			</div>
+			</ErrorBoundary>
 		);
 	} catch (ex) {
 		console.error(ex);

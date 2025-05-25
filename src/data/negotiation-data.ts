@@ -48,10 +48,7 @@ The bandit chief archetype can be used for any other local big shot, such as the
 				description: 'In times of peace, if you pick up a silver coin that’s not yours, the sheriff comes knocking on your door. In war, whole caravans disappear and nobody blinks. Give me war.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static knight: Negotiation = {
@@ -100,10 +97,7 @@ The knight archetype can be used for any other local authority, such as a villag
 				description: 'I believe in law, not vengeance, and law is decided by higher courts. I’m just a functionary.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static guildmaster: Negotiation = {
@@ -152,10 +146,7 @@ The guildmaster archetype can be used for any other local information broker, su
 				description: 'I don’t have time for this foolishness. Come talk to me again when you have something of value to show me.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static warlord: Negotiation = {
@@ -204,10 +195,7 @@ The warlord archetype can be used for any other local-level threat, such as a va
 				description: 'I’m not some sniveling coward who begs for protection, and neither are my troops. Anyone who asks for safety doesn’t deserve it.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static burgomaster: Negotiation = {
@@ -256,10 +244,7 @@ The burgomaster archetype can be used for any other local ruler, such as a baron
 				description: 'Put that bottle away. I’m a public figure, I can’t be seen carousing and gallivanting and who knows what else.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static virtuoso: Negotiation = {
@@ -308,10 +293,7 @@ The virtuoso archetype can be used for any other local celebrity, such as a mast
 				description: 'Perhaps there are some who hate me … some who think I stand in their way, or some whose accomplishments I have eclipsed. But I hate no one and am jealous of no one.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static highPriest: Negotiation = {
@@ -360,10 +342,7 @@ The high priest archetype can be used for any other national authority, such as 
 				description: 'For shame! Do you boast of doing evil—and expect me to join you in it?'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static duke: Negotiation = {
@@ -412,10 +391,7 @@ The duke archetype can be used for any other royal counselor, such as an archmag
 				description: 'I don’t care about saving lives. We’re all doomed to die. The question is, what will live on after us.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static dragon: Negotiation = {
@@ -464,10 +440,7 @@ The dragon archetype can be used for any other kingdom- level threat, such as a 
 				description: 'My pleasures are as far beyond your comprehension as yours are to a worm.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static monarch: Negotiation = {
@@ -516,10 +489,7 @@ The monarch archetype can be used for any other kingdom-level ruler, such as a t
 				description: 'Revenge is an exciting sport. Sadly, it’s one I’ve had to give up. It’s policy, not revenge, that rules here.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static lich: Negotiation = {
@@ -568,10 +538,7 @@ The lich archetype can be used for any other world- shaking threat, such as a wo
 				description: 'If you’re so intent on saving lives, then bow down before me! No harm will come to my servants.'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 
 	static deity: Negotiation = {
@@ -620,9 +587,6 @@ The deity archetype can be used for any other world-transcending power, such as 
 				description: 'Who do you speak of? Who is beyond me, who is above me? Who will live to see me die, and who drew breath before I gave it? Let them come forth and say their name!'
 			}
 		],
-		state: {
-			deltaInterest: 0,
-			deltaPatience: 0
-		}
+		outcomes: [ '', '', '', '', '', '' ]
 	};
 }

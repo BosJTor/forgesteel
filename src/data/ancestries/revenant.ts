@@ -1,7 +1,9 @@
 import { AbilityKeyword } from '../../enums/ability-keyword';
 import { Ancestry } from '../../models/ancestry';
 import { Characteristic } from '../../enums/characteristic';
+import { ConditionType } from '../../enums/condition-type';
 import { DamageModifierType } from '../../enums/damage-modifier-type';
+import { DamageType } from '../../enums/damage-type';
 import { FactoryLogic } from '../../logic/factory-logic';
 
 export const revenant: Ancestry = {
@@ -17,11 +19,11 @@ export const revenant: Ancestry = {
 		FactoryLogic.feature.createDamageModifier({
 			id: 'revenant-feature-2',
 			modifiers: [
-				FactoryLogic.damageModifier.createPerLevel({ damageType: 'Cold', modifierType: DamageModifierType.Immunity, value: 1 }),
-				FactoryLogic.damageModifier.createPerLevel({ damageType: 'Corruption', modifierType: DamageModifierType.Immunity, value: 1 }),
-				FactoryLogic.damageModifier.createPerLevel({ damageType: 'Lightning', modifierType: DamageModifierType.Immunity, value: 1 }),
-				FactoryLogic.damageModifier.createPerLevel({ damageType: 'Poison', modifierType: DamageModifierType.Immunity, value: 1 }),
-				FactoryLogic.damageModifier.create({ damageType: 'Fire', modifierType: DamageModifierType.Weakness, value: 5 })
+				FactoryLogic.damageModifier.createPerLevel({ damageType: DamageType.Cold, modifierType: DamageModifierType.Immunity, value: 1 }),
+				FactoryLogic.damageModifier.createPerLevel({ damageType: DamageType.Corruption, modifierType: DamageModifierType.Immunity, value: 1 }),
+				FactoryLogic.damageModifier.createPerLevel({ damageType: DamageType.Lightning, modifierType: DamageModifierType.Immunity, value: 1 }),
+				FactoryLogic.damageModifier.createPerLevel({ damageType: DamageType.Poison, modifierType: DamageModifierType.Immunity, value: 1 }),
+				FactoryLogic.damageModifier.create({ damageType: DamageType.Fire, modifierType: DamageModifierType.Weakness, value: 5 })
 			]
 		}),
 		FactoryLogic.feature.create({
@@ -38,6 +40,7 @@ export const revenant: Ancestry = {
 						id: 'revenant-feature-4-1',
 						current: false,
 						former: true,
+						customID: '',
 						value: 1
 					}),
 					value: 1
@@ -51,10 +54,11 @@ export const revenant: Ancestry = {
 					value: 1
 				},
 				{
-					feature: FactoryLogic.feature.create({
+					feature: FactoryLogic.feature.createConditionImmunity({
 						id: 'revenant-feature-4-3',
 						name: 'Bloodless',
-						description: 'For you, an open wound is indistinguishable from a scratch. You can’t become bleeding.'
+						description: 'For you, an open wound is indistinguishable from a scratch.',
+						conditions: [ ConditionType.Bleeding ]
 					}),
 					value: 2
 				},
@@ -63,6 +67,7 @@ export const revenant: Ancestry = {
 						id: 'revenant-feature-4-4',
 						current: false,
 						former: true,
+						customID: '',
 						value: 2
 					}),
 					value: 2

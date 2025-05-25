@@ -2,6 +2,7 @@ import { AbilityDistanceType } from '../../enums/abiity-distance-type';
 import { AbilityKeyword } from '../../enums/ability-keyword';
 import { Characteristic } from '../../enums/characteristic';
 import { DamageModifierType } from '../../enums/damage-modifier-type';
+import { DamageType } from '../../enums/damage-type';
 import { FactoryLogic } from '../../logic/factory-logic';
 import { FeatureField } from '../../enums/feature-field';
 import { HeroClass } from '../../models/class';
@@ -20,7 +21,10 @@ The null is an unarmed psionic warrior who dampens and absorbs the effects of ma
 	heroicResource: 'Discipline',
 	subclassName: 'Tradition',
 	subclassCount: 1,
-	primaryCharacteristics: [ Characteristic.Agility, Characteristic.Intuition ],
+	primaryCharacteristicsOptions: [
+		[ Characteristic.Agility, Characteristic.Intuition ]
+	],
+	primaryCharacteristics: [],
 	featuresByLevel: [
 		{
 			level: 1,
@@ -36,9 +40,10 @@ The null is an unarmed psionic warrior who dampens and absorbs the effects of ma
 					field: FeatureField.Recoveries,
 					value: 8
 				}),
-				FactoryLogic.feature.createSkill({
+				FactoryLogic.feature.createSkillChoice({
 					id: 'null-1-1',
-					skill: 'Psionics'
+					listOptions: [ SkillList.Lore ],
+					selected: [ 'Psionics' ]
 				}),
 				FactoryLogic.feature.createSkillChoice({
 					id: 'null-1-2',
@@ -131,10 +136,11 @@ This ability stays active even after encounters end. It ends if you are dying or
 							value: 1
 						},
 						{
-							feature: FactoryLogic.feature.create({
+							feature: FactoryLogic.feature.createAbilityDamage({
 								id: 'null-1-7b',
 								name: 'Force Augmentation',
-								description: 'You gain a +1 rolled damage bonus with damage-dealing psionic abilities.'
+								keywords: [ AbilityKeyword.Psionic ],
+								modifier: 1
 							}),
 							value: 1
 						},
@@ -650,7 +656,7 @@ As your discipline grows, your psionic mastery of your body intensifies.
 						FactoryLogic.feature.createDamageModifier({
 							id: 'null-sub-2-2-1b',
 							modifiers: [
-								FactoryLogic.damageModifier.createCharacteristic({ damageType: 'Cold', modifierType: DamageModifierType.Immunity, characteristics: [ Characteristic.Intuition ], multiplier: 2 })
+								FactoryLogic.damageModifier.createCharacteristic({ damageType: DamageType.Cold, modifierType: DamageModifierType.Immunity, characteristics: [ Characteristic.Intuition ], multiplier: 2 })
 							]
 						}),
 						FactoryLogic.feature.createChoice({

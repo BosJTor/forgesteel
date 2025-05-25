@@ -5,6 +5,7 @@ import { Hero } from './models/hero.ts';
 import { HeroLogic } from './logic/hero-logic.ts';
 import { Main } from './components/main/main.tsx';
 import { Options } from './models/options.ts';
+import { PanelWidth } from './enums/panel-width.ts';
 import { Playbook } from './models/playbook.ts';
 import { PlaybookLogic } from './logic/playbook-logic.ts';
 import { Sourcebook } from './models/sourcebook.ts';
@@ -21,10 +22,13 @@ const promises = [
 	localforage.getItem<Sourcebook[]>('forgesteel-homebrew-settings'),
 	localforage.getItem<string[]>('forgesteel-hidden-setting-ids'),
 	localforage.getItem<Playbook>('forgesteel-playbook'),
+	localforage.getItem<Playbook>('forgesteel-session'),
 	localforage.getItem<Options[]>('forgesteel-options')
 ];
 
 Promise.all(promises).then(results => {
+	//#region Heroes
+
 	let heroes = results[0] as Hero[] | null;
 	if (!heroes) {
 		heroes = [];
@@ -33,6 +37,10 @@ Promise.all(promises).then(results => {
 	heroes.forEach(hero => {
 		HeroLogic.updateHero(hero);
 	});
+
+	//#endregion
+
+	//#region Homebrew sourcebooks
 
 	let sourcebooks = results[1] as Sourcebook[] | null;
 	if (!sourcebooks) {
@@ -53,10 +61,18 @@ Promise.all(promises).then(results => {
 		});
 	});
 
+	//#endregion
+
+	//#region Hidden sourcebook IDs
+
 	let hiddenSourcebookIDs = results[2] as string[] | null;
 	if (!hiddenSourcebookIDs) {
 		hiddenSourcebookIDs = [];
 	}
+
+	//#endregion
+
+	//#region Playbook
 
 	let playbook = results[3] as Playbook | null;
 	if (!playbook) {
@@ -65,23 +81,63 @@ Promise.all(promises).then(results => {
 
 	PlaybookLogic.updatePlaybook(playbook);
 
-	let options = results[4] as Options | null;
+	//#endregion
+
+	//#region Session
+
+	let session = results[4] as Playbook | null;
+	if (!session) {
+		session = FactoryLogic.createPlaybook();
+	}
+
+	PlaybookLogic.updatePlaybook(session);
+
+	//#endregion
+
+	//#region Options
+
+	let options = results[5] as Options | null;
 	if (!options) {
 		options = {
-			showSkillsInGroups: false,
-			showFreeStrikes: false,
-			showStandardAbilities: false,
-			dimUnavailableAbilities: false,
+			singlePage: false,
+			separateInventoryFeatures: false,
+			showSkillsInGroups: true,
+			showStandardAbilities: true,
+			dimUnavailableAbilities: true,
+			showSources: true,
+			abilityWidth: PanelWidth.Medium,
 			showMonstersInGroups: true,
 			showSimilarMonsters: false,
 			similarLevel: true,
 			similarRole: true,
 			similarOrganization: true,
 			similarSize: true,
+			minionCount: 8,
+			party: '',
+			heroParty: '',
 			heroCount: 4,
 			heroLevel: 1,
-			heroVictories: 0
+			heroVictories: 0,
+			showDefeatedCombatants: false,
+			gridSize: 50,
+			playerGridSize: 50
 		};
+	}
+
+	if (options.singlePage === undefined) {
+		options.singlePage = false;
+	}
+
+	if (options.separateInventoryFeatures === undefined) {
+		options.separateInventoryFeatures = false;
+	}
+
+	if (options.abilityWidth === undefined) {
+		options.abilityWidth = PanelWidth.Medium;
+	}
+
+	if (options.showSources === undefined) {
+		options.showSources = false;
 	}
 
 	if (options.showMonstersInGroups === undefined) {
@@ -108,6 +164,18 @@ Promise.all(promises).then(results => {
 		options.similarSize = true;
 	}
 
+	if (options.minionCount === undefined) {
+		options.minionCount = 8;
+	}
+
+	if (options.party === undefined) {
+		options.party = '';
+	}
+
+	if (options.heroParty === undefined) {
+		options.heroParty = '';
+	}
+
 	if (options.heroCount === undefined) {
 		options.heroCount = 4;
 	}
@@ -120,6 +188,20 @@ Promise.all(promises).then(results => {
 		options.heroVictories = 0;
 	}
 
+	if (options.showDefeatedCombatants === undefined) {
+		options.showDefeatedCombatants = false;
+	}
+
+	if (options.gridSize === undefined) {
+		options.gridSize = 50;
+	}
+
+	if (options.playerGridSize === undefined) {
+		options.playerGridSize = 50;
+	}
+
+	//#endregion
+
 	createRoot(document.getElementById('root')!).render(
 		<StrictMode>
 			<HashRouter>
@@ -128,6 +210,7 @@ Promise.all(promises).then(results => {
 					homebrewSourcebooks={sourcebooks}
 					hiddenSourcebookIDs={hiddenSourcebookIDs}
 					playbook={playbook}
+					session={session}
 					options={options}
 				/>
 			</HashRouter>
